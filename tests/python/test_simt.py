@@ -260,7 +260,7 @@ def test_active_mask():
             a[i] = ti.simt.warp.active_mask()
 
     foo()
-        
+
     for i in range(32):
         print(f"i = {i}, a[i] = {a[i]}")
 
