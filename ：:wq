@@ -92,11 +92,11 @@ def match_any():
     pass
 
 
-def match_all(mask, val):
+def match_all():
     return expr.Expr(
         _ti_core.insert_internal_func_call(
             "cuda_match_all_sync_i32",
-            expr.make_expr_group(mask, val), False))
+            expr.make_expr_group(mask, val, pred), False))
 
 def active_mask():
     # TODO
