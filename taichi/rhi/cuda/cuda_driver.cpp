@@ -41,7 +41,7 @@ CUDADriver::CUDADriver() {
     TI_WARN("CUDA driver not found.");
     return;
   }
-
+  tick;
   loader_->load_function("hipGetErrorName", get_error_name);
   loader_->load_function("hipGetErrorString", get_error_string);
   loader_->load_function("hipDriverGetVersion", driver_get_version);
@@ -59,6 +59,7 @@ CUDADriver::CUDADriver() {
 #include "taichi/rhi/cuda/cuda_driver_functions.inc.h"
 #undef PER_CUDA_FUNCTION
 // TODO
+tick;
 }
 
 // This is for initializing the CUDA driver itself
