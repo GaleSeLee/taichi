@@ -9,12 +9,19 @@
 TLANG_NAMESPACE_BEGIN
 
 std::string get_cuda_error_message(uint32 err) {
-  const char *err_name_ptr;
-  const char *err_string_ptr;
-  CUDADriver::get_instance_without_context().get_error_name(err, &err_name_ptr);
-  CUDADriver::get_instance_without_context().get_error_string(err,
-                                                              &err_string_ptr);
-  return fmt::format("CUDA Error {}: {}", err_name_ptr, err_string_ptr);
+  auto err_name_ptr = CUDADriver::get_instance_without_context().get_error_name(err);
+  auto err_string_ptr = CUDADriver::get_instance_without_context().get_error_string(err);
+  auto a = fmt::format("CUDA Error {}: {}", err_name_ptr, err_string_ptr);
+  std::cout << "Gale | " << " a = " << a << std::endl;
+  err_name_ptr = CUDADriver::get_instance_without_context().get_error_name(1);
+  err_string_ptr = CUDADriver::get_instance_without_context().get_error_string(1);
+  auto b = fmt::format("CUDA Error {}: {}", err_name_ptr, err_string_ptr);
+  std::cout << "Gale | " << " b = " << b << std::endl;
+
+  int version = 1;
+  CUDADriver::get_instance_without_context().driver_get_version(&version);
+  std::cout << "Gale | " << " version = " << version << std::endl;
+  return a;
 }
 
 bool CUDADriver::detected() {

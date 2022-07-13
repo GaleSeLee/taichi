@@ -15,6 +15,8 @@
 #include "taichi/codegen/llvm/struct_llvm.h"
 #include "taichi/util/file_sequence_writer.h"
 
+#include "taichi/debug/log.h"
+
 TLANG_NAMESPACE_BEGIN
 
 // TODO: sort function definitions to match declaration order in header
@@ -2182,6 +2184,7 @@ void CodeGenLLVM::visit_call_bitcode(ExternalFuncCallStmt *stmt) {
   // Link external module to the core module
   if (linked_modules.find(stmt->bc_filename) == linked_modules.end()) {
     linked_modules.insert(stmt->bc_filename);
+    tick;
     std::unique_ptr<llvm::Module> external_module =
         module_from_bitcode_file(stmt->bc_filename, llvm_context);
     auto *func_ptr = external_module->getFunction(stmt->bc_funcname);

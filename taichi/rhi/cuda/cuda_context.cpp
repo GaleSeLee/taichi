@@ -27,10 +27,10 @@ CUDAContext::CUDAContext()
 
   int cc_major, cc_minor;
   driver_.device_get_attribute(
-      &cc_major, CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MAJOR, device_);
+      &cc_major, CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MAJOR, 0);
   driver_.device_get_attribute(
-      &cc_minor, CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MINOR, device_);
-
+      &cc_minor, CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MINOR, 0);
+  std::cout << "Gale | " << cc_major << " . " << cc_minor << std::endl;
   TI_TRACE("CUDA Device Compute Capability: {}.{}", cc_major, cc_minor);
   driver_.context_create(&context_, 0, device_);
 

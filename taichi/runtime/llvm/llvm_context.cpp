@@ -44,6 +44,8 @@
 #include "llvm_context.h"
 #include "taichi/runtime/program_impls/llvm/llvm_program.h"
 
+#include "taichi/debug/log.h"
+
 #ifdef _WIN32
 // Travis CI seems doesn't support <filesystem>...
 #include <filesystem>
@@ -222,6 +224,7 @@ std::unique_ptr<llvm::Module> module_from_bitcode_file(
     const std::string &bitcode_path,
     llvm::LLVMContext *ctx) {
   LlvmModuleBitcodeLoader loader;
+  tick;
   return loader.set_bitcode_path(bitcode_path)
       .set_buffer_id("runtime_bitcode")
       .set_inline_funcs(true)
@@ -304,6 +307,7 @@ std::unique_ptr<llvm::Module> TaichiLLVMContext::clone_runtime_module() {
 std::unique_ptr<llvm::Module> TaichiLLVMContext::clone_module(
     const std::string &file) {
   auto ctx = get_this_thread_context();
+  tick;
   std::unique_ptr<llvm::Module> module = module_from_bitcode_file(
       fmt::format("{}/{}", runtime_lib_dir(), file), ctx);
   if (arch_ == Arch::cuda) {
@@ -461,7 +465,7 @@ void TaichiLLVMContext::link_module_with_cuda_libdevice(
     std::unique_ptr<llvm::Module> &module) {
   TI_AUTO_PROF
   TI_ASSERT(arch_ == Arch::cuda);
-
+  tick;
   auto libdevice_module =
       module_from_bitcode_file(libdevice_path(), get_this_thread_context());
 
@@ -751,6 +755,7 @@ auto make_slim_libdevice = [](const std::vector<std::string> &args) {
                  "Usage: ti task make_slim_libdevice [libdevice.X.bc file]");
 
   auto ctx = std::make_unique<llvm::LLVMContext>();
+  tick;
   auto libdevice_module = module_from_bitcode_file(args[0], ctx.get());
 
   remove_useless_cuda_libdevice_functions(libdevice_module.get());

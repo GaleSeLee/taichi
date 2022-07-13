@@ -612,13 +612,11 @@ class CodeGenLLVMCUDA : public CodeGenLLVM {
         }
       }
       if (stmt->task_type == Type::listgen) {
-        int query_max_block_per_sm;
-        CUDADriver::get_instance().device_get_attribute(
-            &query_max_block_per_sm,
-            CU_DEVICE_ATTRIBUTE_MAX_BLOCKS_PER_MULTIPROCESSOR, nullptr);
+        // Gale 
+        int query_max_block_per_sm = 1;
         int num_SMs;
         CUDADriver::get_instance().device_get_attribute(
-            &num_SMs, CU_DEVICE_ATTRIBUTE_MULTIPROCESSOR_COUNT, nullptr);
+            &num_SMs, CU_DEVICE_ATTRIBUTE_MULTIPROCESSOR_COUNT, 0);
         current_task->grid_dim = num_SMs * query_max_block_per_sm;
       }
       current_task->block_dim = stmt->block_dim;

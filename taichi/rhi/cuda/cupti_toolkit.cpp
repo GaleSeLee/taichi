@@ -28,20 +28,6 @@ enum class CuptiMetricsDefault : uint {
 };
 
 bool check_cupti_availability() {
-  void *device;
-  int cc_major;
-  CUDADriver::get_instance().device_get(&device, 0);
-  CUDADriver::get_instance().device_get_attribute(
-      &cc_major, CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MAJOR, device);
-  if (cc_major < 7) {
-    TI_WARN(
-        "CUPTI profiler APIs unsupported on Device with compute capability < "
-        "7.0 , fallback to default kernel profiler");
-    TI_WARN(
-        "See also: "
-        "https://docs.taichi-lang.org/docs/profiler");
-    return false;
-  }
   return true;
 }
 

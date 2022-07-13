@@ -59,19 +59,13 @@ LlvmRuntimeExecutor::LlvmRuntimeExecutor(CompileConfig &config,
 #if defined(TI_WITH_CUDA)
     int num_SMs{1};
     CUDADriver::get_instance().device_get_attribute(
-        &num_SMs, CU_DEVICE_ATTRIBUTE_MULTIPROCESSOR_COUNT, nullptr);
+        &num_SMs, CU_DEVICE_ATTRIBUTE_MULTIPROCESSOR_COUNT, 0);
     int query_max_block_dim{1024};
     CUDADriver::get_instance().device_get_attribute(
-        &query_max_block_dim, CU_DEVICE_ATTRIBUTE_MAX_BLOCK_DIM_X, nullptr);
+        &query_max_block_dim, CU_DEVICE_ATTRIBUTE_MAX_BLOCK_DIM_X, 0);
     int version{0};
     CUDADriver::get_instance().driver_get_version(&version);
     int query_max_block_per_sm{16};
-    if (version >= 11000) {
-      // query this attribute only when CUDA version is above 11.0
-      CUDADriver::get_instance().device_get_attribute(
-          &query_max_block_per_sm,
-          CU_DEVICE_ATTRIBUTE_MAX_BLOCKS_PER_MULTIPROCESSOR, nullptr);
-    }
 
     if (config.max_block_dim == 0) {
       config.max_block_dim = query_max_block_dim;

@@ -29,11 +29,11 @@ constexpr uint32 CU_STREAM_DEFAULT = 0x0;
 constexpr uint32 CU_STREAM_NON_BLOCKING = 0x1;
 constexpr uint32 CU_MEM_ATTACH_GLOBAL = 0x1;
 constexpr uint32 CU_MEM_ADVISE_SET_PREFERRED_LOCATION = 3;
-constexpr uint32 CU_DEVICE_ATTRIBUTE_MAX_BLOCK_DIM_X = 2;
-constexpr uint32 CU_DEVICE_ATTRIBUTE_MAX_BLOCKS_PER_MULTIPROCESSOR = 106;
-constexpr uint32 CU_DEVICE_ATTRIBUTE_MULTIPROCESSOR_COUNT = 16;
-constexpr uint32 CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MAJOR = 75;
-constexpr uint32 CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MINOR = 76;
+constexpr uint32 CU_DEVICE_ATTRIBUTE_MAX_BLOCK_DIM_X = 26;
+constexpr uint32 CU_DEVICE_ATTRIBUTE_MULTIPROCESSOR_COUNT = 63;
+constexpr uint32 CU_DEVICE_ATTRIBUTE_MAX_BLOCKS_PER_MULTIPROCESSOR = 25;
+constexpr uint32 CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MAJOR = 23;
+constexpr uint32 CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MINOR = 61;
 constexpr uint32 CUDA_ERROR_ASSERT = 710;
 constexpr uint32 CU_JIT_MAX_REGISTERS = 0;
 constexpr uint32 CU_POINTER_ATTRIBUTE_MEMORY_TYPE = 2;
@@ -84,6 +84,7 @@ class CUDADriverFunction {
   // Note: CUDA driver API passes everything as value
   void operator()(Args... args) {
     auto err = call(args...);
+    std::cout << err << " : " << name_ << " " << symbol_name_ << std::endl;
     TI_ERROR_IF(err, get_error_message(err));
   }
 
@@ -102,11 +103,10 @@ class CUDADriver {
 #include "taichi/rhi/cuda/cuda_driver_functions.inc.h"
 #undef PER_CUDA_FUNCTION
 
-  void (*get_error_name)(uint32, const char **);
+  char (*get_error_name)(uint32);
+  char (*get_error_string)(uint32);
 
-  void (*get_error_string)(uint32, const char **);
-
-  void (*driver_get_version)(int *);
+  void (*driver_get_version)(int *); // work
 
   bool detected();
 
