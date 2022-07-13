@@ -15,6 +15,7 @@
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Intrinsics.h"
 #include "llvm/IR/IntrinsicsNVPTX.h"
+#include "llvm/IR/IntrinsicsAMDGPU.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Type.h"
@@ -86,10 +87,10 @@ TaichiLLVMContext::TaichiLLVMContext(CompileConfig *config, Arch arch)
 #endif
   } else {
 #if defined(TI_WITH_CUDA)
-    LLVMInitializeNVPTXTarget();
-    LLVMInitializeNVPTXTargetMC();
-    LLVMInitializeNVPTXTargetInfo();
-    LLVMInitializeNVPTXAsmPrinter();
+    LLVMInitializeAMDGPUTarget();
+    LLVMInitializeAMDGPUTargetMC();
+    LLVMInitializeAMDGPUTargetInfo();
+    LLVMInitializeAMDGPUAsmPrinter();
 #else
     TI_NOT_IMPLEMENTED
 #endif
@@ -306,7 +307,7 @@ std::unique_ptr<llvm::Module> TaichiLLVMContext::clone_module(
   std::unique_ptr<llvm::Module> module = module_from_bitcode_file(
       fmt::format("{}/{}", runtime_lib_dir(), file), ctx);
   if (arch_ == Arch::cuda) {
-    module->setTargetTriple("nvptx64-nvidia-cuda");
+    module->setTargetTriple("amdgcn-amd-amdhsa");
 
 #if defined(TI_WITH_CUDA)
     auto func = module->getFunction("cuda_compute_capability");
@@ -654,6 +655,7 @@ void TaichiLLVMContext::insert_nvvm_annotation(llvm::Function *func,
       ->addOperand(md_node);
 }
 
+// TODO Gale
 void TaichiLLVMContext::mark_function_as_cuda_kernel(llvm::Function *func,
                                                      int block_dim) {
   // Mark kernel function as a CUDA __global__ function

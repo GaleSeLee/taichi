@@ -297,13 +297,14 @@ if(TI_WITH_LLVM)
 
 
     if (TI_WITH_CUDA)
-        llvm_map_components_to_libnames(llvm_ptx_libs NVPTX)
+        #set(llvm_ptx_libs "AMDGPUCodeGenAMDGPUDescAMDGPUInfo")
+        llvm_map_components_to_libnames(llvm_ptx_libs AMDGPU)
         add_subdirectory(taichi/codegen/cuda)
         add_subdirectory(taichi/runtime/cuda)
-	      add_subdirectory(taichi/rhi/cuda)
+	    add_subdirectory(taichi/rhi/cuda)
         target_link_libraries(${CORE_LIBRARY_NAME} PRIVATE cuda_codegen)
-	      target_link_libraries(${CORE_LIBRARY_NAME} PRIVATE cuda_runtime)
-	      target_link_libraries(${CORE_LIBRARY_NAME} PRIVATE cuda_rhi)
+	    target_link_libraries(${CORE_LIBRARY_NAME} PRIVATE cuda_runtime)
+	    target_link_libraries(${CORE_LIBRARY_NAME} PRIVATE cuda_rhi)
     endif()
 
     add_subdirectory(taichi/rhi/llvm)

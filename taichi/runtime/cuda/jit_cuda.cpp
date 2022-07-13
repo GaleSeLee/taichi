@@ -71,6 +71,7 @@ std::string convert(std::string new_name) {
   return new_name;
 }
 
+// TODO Gale
 std::string JITSessionCUDA::compile_module_to_ptx(
     std::unique_ptr<llvm::Module> &module) {
   TI_AUTO_PROF

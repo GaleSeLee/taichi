@@ -118,7 +118,7 @@ if (NOT TI_WITH_CUDA)
 endif()
 
 if (TI_WITH_CUDA)
-    set(CUDA_ARCH "cuda")
+    set(CUDA_ARCH "amdgpu")
 endif()
 
 if (CLANG_EXECUTABLE)

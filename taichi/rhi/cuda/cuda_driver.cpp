@@ -28,7 +28,7 @@ CUDADriver::CUDADriver() {
   }
 
 #if defined(TI_PLATFORM_LINUX)
-  loader_ = std::make_unique<DynamicLoader>("libcuda.so");
+  loader_ = std::make_unique<DynamicLoader>("libamdhip64.so");
 #elif defined(TI_PLATFORM_WINDOWS)
   loader_ = std::make_unique<DynamicLoader>("nvcuda.dll");
 #else
@@ -40,21 +40,14 @@ CUDADriver::CUDADriver() {
     return;
   }
 
-  loader_->load_function("cuGetErrorName", get_error_name);
-  loader_->load_function("cuGetErrorString", get_error_string);
-  loader_->load_function("cuDriverGetVersion", driver_get_version);
+  loader_->load_function("hipGetErrorName", get_error_name);
+  loader_->load_function("hipGetErrorString", get_error_string);
+  loader_->load_function("hipDriverGetVersion", driver_get_version);
 
   int version;
   driver_get_version(&version);
   TI_TRACE("CUDA driver API (v{}.{}) loaded.", version / 1000,
            version % 1000 / 10);
-
-  // CUDA versions should >= 10.
-  if (version < 10000) {
-    TI_WARN("The Taichi CUDA backend requires at least CUDA 10.0, got v{}.{}.",
-            version / 1000, version % 1000 / 10);
-    return;
-  }
 
   cuda_version_valid_ = true;
 #define PER_CUDA_FUNCTION(name, symbol_name, ...) \
@@ -63,6 +56,7 @@ CUDADriver::CUDADriver() {
   name.set_names(#name, #symbol_name);
 #include "taichi/rhi/cuda/cuda_driver_functions.inc.h"
 #undef PER_CUDA_FUNCTION
+// TODO
 }
 
 // This is for initializing the CUDA driver itself

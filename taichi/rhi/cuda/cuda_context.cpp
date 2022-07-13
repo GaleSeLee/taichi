@@ -38,17 +38,7 @@ CUDAContext::CUDAContext()
   TI_TRACE("Total memory {:.2f} GB; free memory {:.2f} GB",
            get_total_memory() / GB, get_free_memory() / GB);
 
-  compute_capability_ = cc_major * 10 + cc_minor;
-
-  if (compute_capability_ > 75) {
-    // The NVPTX backend of LLVM 10.0.0 does not seem to support
-    // compute_capability > 75 yet. See
-    // llvm-10.0.0.src/build/lib/Target/NVPTX/NVPTXGenSubtargetInfo.inc
-    compute_capability_ = 75;
-  }
-
-  mcpu_ = fmt::format("sm_{}", compute_capability_);
-
+  mcpu_ = "gfx906";
   TI_TRACE("Emitting CUDA code for {}", mcpu_);
 }
 
