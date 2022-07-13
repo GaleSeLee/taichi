@@ -147,7 +147,7 @@ std::string find_existing_command(const std::vector<std::string> &commands) {
 }
 
 std::string get_runtime_fn(Arch arch) {
-  return fmt::format("runtime_{}.bc", arch_name(arch));
+  return fmt::format("runtime_amdgpu.bc");
 }
 
 std::string libdevice_path() {
@@ -225,6 +225,7 @@ std::unique_ptr<llvm::Module> module_from_bitcode_file(
     llvm::LLVMContext *ctx) {
   LlvmModuleBitcodeLoader loader;
   tick;
+  std::cout << bitcode_path << std::endl;
   return loader.set_bitcode_path(bitcode_path)
       .set_buffer_id("runtime_bitcode")
       .set_inline_funcs(true)
@@ -308,6 +309,7 @@ std::unique_ptr<llvm::Module> TaichiLLVMContext::clone_module(
     const std::string &file) {
   auto ctx = get_this_thread_context();
   tick;
+  std::cout << file << std::endl;
   std::unique_ptr<llvm::Module> module = module_from_bitcode_file(
       fmt::format("{}/{}", runtime_lib_dir(), file), ctx);
   if (arch_ == Arch::cuda) {
@@ -444,7 +446,8 @@ std::unique_ptr<llvm::Module> TaichiLLVMContext::clone_module(
 
     patch_intrinsic("block_memfence", Intrinsic::nvvm_membar_cta, false);
 
-    link_module_with_cuda_libdevice(module);
+    // Gale
+    // link_module_with_cuda_libdevice(module);
 
     // To prevent potential symbol name conflicts, we use "cuda_vprintf"
     // instead of "vprintf" in llvm/runtime.cpp. Now we change it back for
