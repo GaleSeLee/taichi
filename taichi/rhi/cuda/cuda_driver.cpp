@@ -4,6 +4,8 @@
 #include "taichi/rhi/cuda/cuda_context.h"
 #include "taichi/util/environ_config.h"
 
+#include "taichi/debug/log.h"
+
 TLANG_NAMESPACE_BEGIN
 
 std::string get_cuda_error_message(uint32 err) {
