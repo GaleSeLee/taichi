@@ -6,3 +6,10 @@
                   << ":" << __FUNCTION__ << ":" << __LINE__ << "] "     \
                   << std::endl;                                         \
     } while (0)
+
+#define tickv(x)                                                              \
+    do {                                                                      \
+        std::cerr << "[" COLOR_DEBUG "DEBUG" COLOR_RESET " " << __FILE__  \
+                  << ":" << __FUNCTION__ << ":" << __LINE__ << "] " << #x \
+                  << " = " << (x) << std::endl;                           \
+    } while (0)

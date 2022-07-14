@@ -84,8 +84,8 @@ std::string JITSessionCUDA::compile_module_to_ptx(
   using namespace llvm;
 
   if (this->config_->print_kernel_llvm_ir) {
-    static FileSequenceWriter writer("taichi_kernel_cuda_llvm_ir_{:04d}.ll",
-                                     "unoptimized LLVM IR (CUDA)");
+    static FileSequenceWriter writer("taichi_kernel_amdgpu_llvm_ir_{:04d}.ll",
+                                     "unoptimized LLVM IR (AMDGPU)");
     writer.write(module.get());
   }
 

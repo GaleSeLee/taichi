@@ -10,6 +10,8 @@
 #include "taichi/rhi/cuda/cuda_driver.h"
 #include "taichi/rhi/cuda/cuda_profiler.h"
 
+#include "taichi/debug/log.h"
+
 TLANG_NAMESPACE_BEGIN
 
 CUDAContext::CUDAContext()
@@ -35,10 +37,15 @@ CUDAContext::CUDAContext()
   driver_.context_create(&context_, 0, device_);
 
   const auto GB = std::pow(1024.0, 3.0);
+  auto total_memory = get_total_memory() / GB;
+  auto free_memory = get_free_memory() / GB;
   TI_TRACE("Total memory {:.2f} GB; free memory {:.2f} GB",
-           get_total_memory() / GB, get_free_memory() / GB);
+           total_memory, free_memory);
+  
+  tickv(total_memory);
+  tickv(free_memory);
 
-  mcpu_ = "gfx906";
+  mcpu_ = "gfx1010";
   TI_TRACE("Emitting CUDA code for {}", mcpu_);
 }
 
