@@ -281,7 +281,9 @@ static void remove_useless_cuda_libdevice_functions(llvm::Module *module) {
 }
 
 void TaichiLLVMContext::init_runtime_jit_module() {
+  tick;
   update_runtime_jit_module(clone_runtime_module());
+  tick;
 }
 
 // Note: runtime_module = init_module < struct_module
@@ -301,6 +303,7 @@ std::unique_ptr<llvm::Module> TaichiLLVMContext::clone_runtime_module() {
   }
 
   TI_ASSERT(cloned != nullptr);
+  tick;
 
   return cloned;
 }
@@ -314,6 +317,8 @@ std::unique_ptr<llvm::Module> TaichiLLVMContext::clone_module(
       fmt::format("{}/{}", runtime_lib_dir(), file), ctx);
   if (arch_ == Arch::cuda) {
     module->setTargetTriple("amdgcn-amd-amdhsa");
+  
+  tick;
 
 #if defined(TI_WITH_CUDA)
     auto func = module->getFunction("cuda_compute_capability");
@@ -327,6 +332,7 @@ std::unique_ptr<llvm::Module> TaichiLLVMContext::clone_module(
       TaichiLLVMContext::mark_inline(func);
     }
 #endif
+  tick;
 
     auto patch_intrinsic = [&](std::string name, Intrinsic::ID intrin,
                                bool ret = true,
@@ -370,7 +376,8 @@ std::unique_ptr<llvm::Module> TaichiLLVMContext::clone_module(
           op, args[0], args[1], llvm::AtomicOrdering::SequentiallyConsistent));
       TaichiLLVMContext::mark_inline(func);
     };
-
+  tick;
+  /*
     patch_intrinsic("thread_idx", Intrinsic::nvvm_read_ptx_sreg_tid_x);
     patch_intrinsic("cuda_clock_i64", Intrinsic::nvvm_read_ptx_sreg_clock64);
     patch_intrinsic("block_idx", Intrinsic::nvvm_read_ptx_sreg_ctaid_x);
@@ -411,7 +418,7 @@ std::unique_ptr<llvm::Module> TaichiLLVMContext::clone_module(
 
     patch_intrinsic("cuda_match_any_sync_i32",
                     Intrinsic::nvvm_match_any_sync_i32);
-
+*/
     // LLVM 10.0.0 seems to have a bug on this intrinsic function
     /*
     nvvm_match_all_sync_i32
@@ -430,7 +437,7 @@ std::unique_ptr<llvm::Module> TaichiLLVMContext::clone_module(
     patch_intrinsic("cuda_match_any_sync_i64",
                     Intrinsic::nvvm_match_any_sync_i64);
                     */
-
+/*
     patch_intrinsic("ctlz_i32", Intrinsic::ctlz, true,
                     {llvm::Type::getInt32Ty(*ctx)}, {get_constant(false)});
     patch_intrinsic("cttz_i32", Intrinsic::cttz, true,
@@ -445,7 +452,7 @@ std::unique_ptr<llvm::Module> TaichiLLVMContext::clone_module(
     patch_atomic_add("atomic_add_f64", llvm::AtomicRMWInst::FAdd);
 
     patch_intrinsic("block_memfence", Intrinsic::nvvm_membar_cta, false);
-
+*/
     // Gale
     // link_module_with_cuda_libdevice(module);
 
@@ -460,6 +467,7 @@ std::unique_ptr<llvm::Module> TaichiLLVMContext::clone_module(
 
     // runtime_module->print(llvm::errs(), nullptr);
   }
+  tick;
 
   return module;
 }
@@ -657,7 +665,7 @@ void TaichiLLVMContext::insert_nvvm_annotation(llvm::Function *func,
 
   MDNode *md_node = MDNode::get(*ctx, md_args);
 
-  func->getParent()
+  func->getParent() // Module
       ->getOrInsertNamedMetadata("nvvm.annotations")
       ->addOperand(md_node);
 }
@@ -667,12 +675,12 @@ void TaichiLLVMContext::mark_function_as_cuda_kernel(llvm::Function *func,
                                                      int block_dim) {
   // Mark kernel function as a CUDA __global__ function
   // Add the nvvm annotation that it is considered a kernel function.
-  insert_nvvm_annotation(func, "kernel", 1);
-  if (block_dim != 0) {
+  //insert_nvvm_annotation(func, "kernel", 1);
+  //if (block_dim != 0) {
     // CUDA launch bounds
-    insert_nvvm_annotation(func, "maxntidx", block_dim);
-    insert_nvvm_annotation(func, "minctasm", 2);
-  }
+  //  insert_nvvm_annotation(func, "maxntidx", block_dim);
+  //  insert_nvvm_annotation(func, "minctasm", 2);
+  //}
 }
 
 void TaichiLLVMContext::eliminate_unused_functions(

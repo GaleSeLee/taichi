@@ -29,9 +29,9 @@ PER_CUDA_FUNCTION(malloc, hipMalloc, void **, std::size_t);
 PER_CUDA_FUNCTION(malloc_managed, hipMallocManaged, void **, std::size_t, uint32);
 PER_CUDA_FUNCTION(memset, hipMemset, void *, uint8, std::size_t);
 PER_CUDA_FUNCTION(mem_free, hipFree, void *);
-PER_CUDA_FUNCTION(mem_advise, hipMemAdvise, void *, std::size_t, uint32, uint32);
+// PER_CUDA_FUNCTION(mem_advise, hipMemAdvise, void *, std::size_t, uint32, uint32);
 PER_CUDA_FUNCTION(mem_get_info, hipMemGetInfo, std::size_t *, std::size_t *);
-PER_CUDA_FUNCTION(mem_get_attribute, hipPointerGetAttribute, void *, uint32, void *);
+// PER_CUDA_FUNCTION(mem_get_attribute, hipPointerGetAttribute, void *, uint32, void *);
 
 // Module and kernels
 PER_CUDA_FUNCTION(module_get_function, hipModuleGetFunction, void **, void *, const char *);

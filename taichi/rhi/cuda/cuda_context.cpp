@@ -45,7 +45,7 @@ CUDAContext::CUDAContext()
   tickv(total_memory);
   tickv(free_memory);
 
-  mcpu_ = "gfx1010";
+  mcpu_ = "gfx906";
   TI_TRACE("Emitting CUDA code for {}", mcpu_);
 }
 

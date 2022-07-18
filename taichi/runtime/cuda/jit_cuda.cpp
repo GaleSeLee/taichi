@@ -1,5 +1,6 @@
 #include "taichi/runtime/cuda/jit_cuda.h"
 #include "taichi/runtime/llvm/llvm_context.h"
+#include "taichi/debug/log.h"
 
 TLANG_NAMESPACE_BEGIN
 
@@ -13,6 +14,7 @@ JITModule *JITSessionCUDA ::add_module(std::unique_ptr<llvm::Module> M,
                                      "module NVPTX");
     writer.write(ptx);
   }
+  tick;
   // TODO: figure out why using the guard leads to wrong tests results
   // auto context_guard = CUDAContext::get_instance().get_guard();
   CUDAContext::get_instance().make_current();
@@ -46,7 +48,7 @@ JITModule *JITSessionCUDA ::add_module(std::unique_ptr<llvm::Module> M,
 }
 
 std::string cuda_mattrs() {
-  return "+ptx63";
+  return "";
 }
 
 std::string convert(std::string new_name) {
@@ -88,6 +90,7 @@ std::string JITSessionCUDA::compile_module_to_ptx(
                                      "unoptimized LLVM IR (AMDGPU)");
     writer.write(module.get());
   }
+  tick;
 
   for (auto &f : module->globals())
     f.setName(convert(f.getName()));
@@ -95,6 +98,7 @@ std::string JITSessionCUDA::compile_module_to_ptx(
     f.setName(convert(f.getName()));
 
   llvm::Triple triple(module->getTargetTriple());
+  tick;
 
   // Allocate target machine
 
@@ -131,6 +135,8 @@ std::string JITSessionCUDA::compile_module_to_ptx(
 
   TI_ERROR_UNLESS(target_machine.get(), "Could not allocate target machine!");
 
+  tick;
+
   module->setDataLayout(target_machine->createDataLayout());
 
   // Set up passes
@@ -145,6 +151,8 @@ std::string JITSessionCUDA::compile_module_to_ptx(
       target_machine->getTargetIRAnalysis()));
   function_pass_manager.add(createTargetTransformInfoWrapperPass(
       target_machine->getTargetIRAnalysis()));
+
+  tick;
 
   // NVidia's libdevice library uses a __nvvm_reflect to choose
   // how to handle denormalized numbers. (The pass replaces calls
@@ -163,14 +171,14 @@ std::string JITSessionCUDA::compile_module_to_ptx(
   const auto kFTZDenorms = 1;
 
   // Insert a module flag for the FTZ handling.
-  module->addModuleFlag(llvm::Module::Override, "nvvm-reflect-ftz",
-                        kFTZDenorms);
+  //module->addModuleFlag(llvm::Module::Override, "nvvm-reflect-ftz",
+  //                      kFTZDenorms);
 
-  if (kFTZDenorms) {
-    for (llvm::Function &fn : *module) {
-      fn.addFnAttr("nvptx-f32ftz", "true");
-    }
-  }
+  //if (kFTZDenorms) {
+  //  for (llvm::Function &fn : *module) {
+  //    fn.addFnAttr("nvptx-f32ftz", "true");
+  //  }
+  //}
 
   PassManagerBuilder b;
   b.OptLevel = 3;
@@ -191,22 +199,29 @@ std::string JITSessionCUDA::compile_module_to_ptx(
   // Ask the target to add backend passes as necessary.
   bool fail = target_machine->addPassesToEmitFile(
       module_pass_manager, ostream, nullptr, llvm::CGFT_AssemblyFile, true);
+  
+  tickv(fail);
+  tick;
 
   TI_ERROR_IF(fail, "Failed to set up passes to emit PTX source\n");
 
   {
     TI_PROFILER("llvm_function_pass");
     function_pass_manager.doInitialization();
+    tick;
     for (llvm::Module::iterator i = module->begin(); i != module->end(); i++)
       function_pass_manager.run(*i);
 
+    tick;
     function_pass_manager.doFinalization();
   }
+  tick;
 
   {
-    TI_PROFILER("llvm_module_pass");
+    tick;
     module_pass_manager.run(*module);
   }
+  tick;
 
   if (this->config_->print_kernel_llvm_ir_optimized) {
     static FileSequenceWriter writer(
@@ -219,6 +234,7 @@ std::string JITSessionCUDA::compile_module_to_ptx(
 
   // Null-terminate the ptx source
   buffer.push_back(0);
+  tick;
   return buffer;
 }
 

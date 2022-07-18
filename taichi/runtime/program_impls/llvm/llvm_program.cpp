@@ -13,6 +13,7 @@
 #include "taichi/codegen/cuda/codegen_cuda.h"
 #endif
 
+
 namespace taichi {
 namespace lang {
 
@@ -32,6 +33,7 @@ std::unique_ptr<llvm::Module>
 LlvmProgramImpl::clone_struct_compiler_initial_context(
     bool has_multiple_snode_trees,
     TaichiLLVMContext *tlctx) {
+  std::cout << "Gale | " << __FILE__ << " : " << __LINE__ <<std::endl;
   if (has_multiple_snode_trees) {
     return tlctx->clone_struct_module();
   }

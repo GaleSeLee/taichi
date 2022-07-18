@@ -771,9 +771,9 @@ FunctionType CUDAModuleToFunctionConverter::convert(
           // in shapes, e.g., shape=(0) or shape=(100, 0, 200). This makes
           // `arr_sz` zero.
           unsigned int attr_val = 0;
-          uint32_t ret_code = CUDADriver::get_instance().mem_get_attribute.call(
-              &attr_val, CU_POINTER_ATTRIBUTE_MEMORY_TYPE,
-              (void *)arg_buffers[i]);
+          uint32_t ret_code = CUDA_SUCCESS; //CUDADriver::get_instance().mem_get_attribute.call(
+              //&attr_val, CU_POINTER_ATTRIBUTE_MEMORY_TYPE,
+              //(void *)arg_buffers[i]);
 
           if (ret_code != CUDA_SUCCESS || attr_val != CU_MEMORYTYPE_DEVICE) {
             // Copy to device buffer if arg is on host

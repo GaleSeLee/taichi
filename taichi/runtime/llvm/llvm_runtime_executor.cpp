@@ -7,6 +7,8 @@
 #include "taichi/platform/cuda/detect_cuda.h"
 #include "taichi/rhi/cuda/cuda_driver.h"
 
+#include "taichi/debug/log.h"
+
 #if defined(TI_WITH_CUDA)
 #include "taichi/rhi/cuda/cuda_context.h"
 #endif
@@ -117,6 +119,7 @@ TaichiLLVMContext *LlvmRuntimeExecutor::get_llvm_context(Arch arch) {
 void LlvmRuntimeExecutor::initialize_host() {
   // Note this cannot be placed inside LlvmProgramImpl constructor, see doc
   // string for init_runtime_jit_module() for more details.
+  tick;
   llvm_context_host_->init_runtime_jit_module();
 }
 
@@ -124,6 +127,7 @@ void LlvmRuntimeExecutor::maybe_initialize_cuda_llvm_context() {
   if (config_->arch == Arch::cuda && llvm_context_device_ == nullptr) {
     llvm_context_device_ =
         std::make_unique<TaichiLLVMContext>(config_, Arch::cuda);
+    tick;
     llvm_context_device_->init_runtime_jit_module();
   }
 }
