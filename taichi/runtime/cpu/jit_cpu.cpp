@@ -230,6 +230,7 @@ void JITSessionCPU::global_optimize_module_cpu(llvm::Module *module) {
   legacy::PassManager module_pass_manager;
 
   llvm::StringRef mcpu = llvm::sys::getHostCPUName();
+  std::cout << "Gale | triple = " << triple.str() << std::endl;
   std::unique_ptr<TargetMachine> target_machine(target->createTargetMachine(
       triple.str(), mcpu.str(), "", options, llvm::Reloc::PIC_,
       llvm::CodeModel::Small, CodeGenOpt::Aggressive));

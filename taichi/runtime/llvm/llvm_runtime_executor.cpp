@@ -30,6 +30,8 @@ void *taichi_allocate_aligned(MemoryPool *memory_pool,
 LlvmRuntimeExecutor::LlvmRuntimeExecutor(CompileConfig &config,
                                          KernelProfilerBase *profiler)
     : config_(&config) {
+  // Gale Error
+  std::cout << "Gale | " << "Test is cuda driver available" << std::endl;
   runtime_mem_info_ = Runtime::create(config.arch);
   if (config.arch == Arch::cuda) {
     if (!runtime_mem_info_) {

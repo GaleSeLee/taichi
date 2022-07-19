@@ -308,6 +308,7 @@ std::unique_ptr<llvm::Module> TaichiLLVMContext::clone_runtime_module() {
   return cloned;
 }
 
+// May cause error
 std::unique_ptr<llvm::Module> TaichiLLVMContext::clone_module(
     const std::string &file) {
   auto ctx = get_this_thread_context();

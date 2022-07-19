@@ -16,6 +16,7 @@
 #include "taichi/runtime/program_impls/llvm/llvm_program.h"
 #include "taichi/util/action_recorder.h"
 
+#include "taichi/debug/log.h" 
 TLANG_NAMESPACE_BEGIN
 
 using namespace llvm;
@@ -848,6 +849,8 @@ FunctionType CUDAModuleToFunctionConverter::convert(
     const Kernel *kernel,
     std::unique_ptr<llvm::Module> mod,
     std::vector<OffloadedTask> &&tasks) const {
+    tick;
+    std::cout << "Gale | " << "Convert" << std::endl;
   return convert(kernel->name, infer_launch_args(kernel), std::move(mod),
                  std::move(tasks));
 }

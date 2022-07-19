@@ -98,7 +98,7 @@ std::string JITSessionCUDA::compile_module_to_ptx(
     f.setName(convert(f.getName()));
 
   llvm::Triple triple(module->getTargetTriple());
-  tick;
+  tickv(triple.str());
 
   // Allocate target machine
 
@@ -108,7 +108,7 @@ std::string JITSessionCUDA::compile_module_to_ptx(
   TI_ERROR_UNLESS(target, err_str);
 
   TargetOptions options;
-  options.PrintMachineCode = 0;
+  /*options.PrintMachineCode = 0;
   if (this->config_->fast_math) {
     options.AllowFPOpFusion = FPOpFusion::Fast;
     // See NVPTXISelLowering.cpp
@@ -127,16 +127,21 @@ std::string JITSessionCUDA::compile_module_to_ptx(
   options.NoZerosInBSS = 0;
   options.GuaranteedTailCallOpt = 0;
   options.StackAlignmentOverride = 0;
+*/
 
+  tickv(triple.str());
+  llvm::StringRef mcpu = llvm::sys::getHostCPUName();
+  tickv(mcpu.str());
   std::unique_ptr<TargetMachine> target_machine(target->createTargetMachine(
-      triple.str(), CUDAContext::get_instance().get_mcpu(), cuda_mattrs(),
+      "x86_64-unknown-linux-gnu", "generic", "",
       options, llvm::Reloc::PIC_, llvm::CodeModel::Small,
       CodeGenOpt::Aggressive));
 
   TI_ERROR_UNLESS(target_machine.get(), "Could not allocate target machine!");
 
   tick;
-
+  
+  tickv(target_machine->createDataLayout().getStringRepresentation());
   module->setDataLayout(target_machine->createDataLayout());
 
   // Set up passes
@@ -147,31 +152,18 @@ std::string JITSessionCUDA::compile_module_to_ptx(
   legacy::FunctionPassManager function_pass_manager(module.get());
   legacy::PassManager module_pass_manager;
 
+  // Gale
   module_pass_manager.add(createTargetTransformInfoWrapperPass(
       target_machine->getTargetIRAnalysis()));
   function_pass_manager.add(createTargetTransformInfoWrapperPass(
-      target_machine->getTargetIRAnalysis()));
+       target_machine->getTargetIRAnalysis()));
 
   tick;
 
-  // NVidia's libdevice library uses a __nvvm_reflect to choose
-  // how to handle denormalized numbers. (The pass replaces calls
-  // to __nvvm_reflect with a constant via a map lookup. The inliner
-  // pass then resolves these situations to fast code, often a single
-  // instruction per decision point.)
-  //
-  // The default is (more) IEEE like handling. FTZ mode flushes them
-  // to zero. (This may only apply to single-precision.)
-  //
-  // The libdevice documentation covers other options for math accuracy
-  // such as replacing division with multiply by the reciprocal and
-  // use of fused-multiply-add, but they do not seem to be controlled
-  // by this __nvvvm_reflect mechanism and may be flags to earlier compiler
-  // passes.
   const auto kFTZDenorms = 1;
 
   // Insert a module flag for the FTZ handling.
-  //module->addModuleFlag(llvm::Module::Override, "nvvm-reflect-ftz",
+  // module->addModuleFlag(llvm::Module::Override, "nvvm-reflect-ftz",
   //                      kFTZDenorms);
 
   //if (kFTZDenorms) {
