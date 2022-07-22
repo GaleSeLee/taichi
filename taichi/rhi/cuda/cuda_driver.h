@@ -84,7 +84,8 @@ class CUDADriverFunction {
   // Note: CUDA driver API passes everything as value
   void operator()(Args... args) {
     auto err = call(args...);
-    // std::cout << err << " : " << name_ << " " << symbol_name_ << std::endl;
+    // Galestd
+    std::cout << err << " : " << name_ << " " << symbol_name_ << std::endl;
     TI_ERROR_IF(err, get_error_message(err));
   }
 

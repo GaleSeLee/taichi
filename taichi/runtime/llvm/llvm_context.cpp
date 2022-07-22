@@ -75,6 +75,7 @@ TaichiLLVMContext::TaichiLLVMContext(CompileConfig *config, Arch arch)
       nullptr);
 
   if (arch_is_cpu(arch)) {
+    tick;
 #if defined(TI_PLATFORM_OSX) and defined(TI_ARCH_ARM)
     // Note that on Apple Silicon (M1), "native" seems to mean arm instead of
     // arm64 (aka AArch64).
@@ -281,13 +282,13 @@ static void remove_useless_cuda_libdevice_functions(llvm::Module *module) {
 }
 
 void TaichiLLVMContext::init_runtime_jit_module() {
+  std::cout << "-----------------------------------------------Line-------------------------------------------" << std::endl;
   tick;
   update_runtime_jit_module(clone_runtime_module());
   tick;
 }
 
-// Note: runtime_module = init_module < struct_module
-
+// Gale trace
 std::unique_ptr<llvm::Module> TaichiLLVMContext::clone_runtime_module() {
   TI_AUTO_PROF
   TI_ASSERT(std::this_thread::get_id() == main_thread_id_);
@@ -321,21 +322,21 @@ std::unique_ptr<llvm::Module> TaichiLLVMContext::clone_module(
   
   tick;
 
-#if defined(TI_WITH_CUDA)
-    auto func = module->getFunction("cuda_compute_capability");
-    if (func) {
-      func->deleteBody();
-      auto bb = llvm::BasicBlock::Create(*ctx, "entry", func);
-      IRBuilder<> builder(*ctx);
-      builder.SetInsertPoint(bb);
-      builder.CreateRet(
-          get_constant(CUDAContext::get_instance().get_compute_capability()));
-      TaichiLLVMContext::mark_inline(func);
-    }
-#endif
+//#if defined(TI_WITH_CUDA)
+//    auto func = module->getFunction("cuda_compute_capability");
+//    if (func) {
+//      func->deleteBody();
+//      auto bb = llvm::BasicBlock::Create(*ctx, "entry", func);
+//      IRBuilder<> builder(*ctx);
+//      builder.SetInsertPoint(bb);
+//      builder.CreateRet(
+//          get_constant(CUDAContext::get_instance().get_compute_capability()));
+//      TaichiLLVMContext::mark_inline(func);
+//   }
+//#endif
   tick;
-
-    auto patch_intrinsic = [&](std::string name, Intrinsic::ID intrin,
+  {
+    /*auto patch_intrinsic = [&](std::string name, Intrinsic::ID intrin,
                                bool ret = true,
                                std::vector<llvm::Type *> types = {},
                                std::vector<llvm::Value *> extra_args = {}) {
@@ -378,6 +379,7 @@ std::unique_ptr<llvm::Module> TaichiLLVMContext::clone_module(
       TaichiLLVMContext::mark_inline(func);
     };
   tick;
+  */
   /*
     patch_intrinsic("thread_idx", Intrinsic::nvvm_read_ptx_sreg_tid_x);
     patch_intrinsic("cuda_clock_i64", Intrinsic::nvvm_read_ptx_sreg_clock64);
@@ -460,13 +462,14 @@ std::unique_ptr<llvm::Module> TaichiLLVMContext::clone_module(
     // To prevent potential symbol name conflicts, we use "cuda_vprintf"
     // instead of "vprintf" in llvm/runtime.cpp. Now we change it back for
     // linking
-    for (auto &f : *module) {
-      if (f.getName() == "cuda_vprintf") {
-        f.setName("vprintf");
-      }
-    }
+    //for (auto &f : *module) {
+    //  if (f.getName() == "cuda_vprintf") {
+    //    f.setName("vprintf");
+    //  }
+    //}
 
     // runtime_module->print(llvm::errs(), nullptr);
+  }
   }
   tick;
 

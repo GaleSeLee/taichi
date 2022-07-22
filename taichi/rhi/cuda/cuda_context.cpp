@@ -32,7 +32,6 @@ CUDAContext::CUDAContext()
       &cc_major, CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MAJOR, 0);
   driver_.device_get_attribute(
       &cc_minor, CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MINOR, 0);
-  std::cout << "AMDGPU Version" << cc_major << "." << cc_minor << std::endl;
   TI_TRACE("CUDA Device Compute Capability: {}.{}", cc_major, cc_minor);
   driver_.context_create(&context_, 0, device_);
 
@@ -45,7 +44,7 @@ CUDAContext::CUDAContext()
   tickv(total_memory);
   tickv(free_memory);
 
-  mcpu_ = "gfx906";
+  mcpu_ = "gfx1030";
   TI_TRACE("Emitting CUDA code for {}", mcpu_);
 }
 

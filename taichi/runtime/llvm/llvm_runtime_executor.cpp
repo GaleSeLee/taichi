@@ -31,8 +31,9 @@ LlvmRuntimeExecutor::LlvmRuntimeExecutor(CompileConfig &config,
                                          KernelProfilerBase *profiler)
     : config_(&config) {
   // Gale Error
-  std::cout << "Gale | " << "Test is cuda driver available" << std::endl;
+  tick;
   runtime_mem_info_ = Runtime::create(config.arch);
+  tick;
   if (config.arch == Arch::cuda) {
     if (!runtime_mem_info_) {
       TI_WARN("Taichi is not compiled with CUDA.");
@@ -59,6 +60,7 @@ LlvmRuntimeExecutor::LlvmRuntimeExecutor(CompileConfig &config,
   llvm_context_host_ =
       std::make_unique<TaichiLLVMContext>(&config, host_arch());
 
+  tick;
   if (config.arch == Arch::cuda) {
 #if defined(TI_WITH_CUDA)
     int num_SMs{1};
@@ -95,14 +97,17 @@ LlvmRuntimeExecutor::LlvmRuntimeExecutor(CompileConfig &config,
 
 #if defined(TI_WITH_CUDA)
   if (config.arch == Arch::cuda) {
+    tick;
     if (config.kernel_profiler) {
       CUDAContext::get_instance().set_profiler(profiler);
     } else {
       CUDAContext::get_instance().set_profiler(nullptr);
     }
+    tick;
     CUDAContext::get_instance().set_debug(config.debug);
     device_ = std::make_shared<cuda::CudaDevice>();
 
+    tick;
     this->maybe_initialize_cuda_llvm_context();
   }
 #endif

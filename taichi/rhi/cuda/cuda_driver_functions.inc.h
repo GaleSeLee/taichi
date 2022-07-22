@@ -37,6 +37,7 @@ PER_CUDA_FUNCTION(mem_get_info, hipMemGetInfo, std::size_t *, std::size_t *);
 PER_CUDA_FUNCTION(module_get_function, hipModuleGetFunction, void **, void *, const char *);
 PER_CUDA_FUNCTION(module_load_data_ex, hipModuleLoadDataEx, void **, const char *,
                     uint32, uint32 *, void **);
+PER_CUDA_FUNCTION(module_load_data, hipModuleLoadData, void **, const void *);
 PER_CUDA_FUNCTION(launch_kernel, hipModuleLaunchKernel, void *, uint32, uint32, uint32,
                     uint32, uint32, uint32, uint32, void *, void **, void **);
 PER_CUDA_FUNCTION(kernel_get_attribute, hipFuncGetAttribute, int *, uint32, void *);

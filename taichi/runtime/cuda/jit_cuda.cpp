@@ -10,7 +10,7 @@ JITModule *JITSessionCUDA ::add_module(std::unique_ptr<llvm::Module> M,
                                        int max_reg) {
   auto ptx = compile_module_to_ptx(M);
   if (this->config_->print_kernel_nvptx) {
-    static FileSequenceWriter writer("taichi_kernel_nvptx_{:04d}.ptx",
+    static FileSequenceWriter writer("taichi_kernel_amdgcn_{:04d}.o",
                                      "module NVPTX");
     writer.write(ptx);
   }
@@ -39,8 +39,9 @@ JITModule *JITSessionCUDA ::add_module(std::unique_ptr<llvm::Module> M,
 
   TI_ASSERT(num_options <= max_num_options);
 
-  CUDADriver::get_instance().module_load_data_ex(
-      &cuda_module, ptx.c_str(), num_options, options, option_values);
+
+  CUDADriver::get_instance().module_load_data(&cuda_module, (const void*)ptx.c_str());
+
   TI_TRACE("CUDA module load time : {}ms", (Time::get_time() - t) * 1000);
   // cudaModules.push_back(cudaModule);
   modules.push_back(std::make_unique<JITModuleCUDA>(cuda_module));
@@ -133,7 +134,7 @@ std::string JITSessionCUDA::compile_module_to_ptx(
   llvm::StringRef mcpu = llvm::sys::getHostCPUName();
   tickv(mcpu.str());
   std::unique_ptr<TargetMachine> target_machine(target->createTargetMachine(
-      "x86_64-unknown-linux-gnu", "generic", "",
+      triple.str(), "gfx1030", "",
       options, llvm::Reloc::PIC_, llvm::CodeModel::Small,
       CodeGenOpt::Aggressive));
 
@@ -189,9 +190,11 @@ std::string JITSessionCUDA::compile_module_to_ptx(
   // Output string stream
 
   // Ask the target to add backend passes as necessary.
+  //bool fail = target_machine->addPassesToEmitFile(
+  //    module_pass_manager, ostream, nullptr, llvm::CGFT_AssemblyFile, true);
   bool fail = target_machine->addPassesToEmitFile(
-      module_pass_manager, ostream, nullptr, llvm::CGFT_AssemblyFile, true);
-  
+        module_pass_manager, ostream, nullptr, llvm::CGFT_ObjectFile, true);
+
   tickv(fail);
   tick;
 
@@ -217,8 +220,8 @@ std::string JITSessionCUDA::compile_module_to_ptx(
 
   if (this->config_->print_kernel_llvm_ir_optimized) {
     static FileSequenceWriter writer(
-        "taichi_kernel_cuda_llvm_ir_optimized_{:04d}.ll",
-        "optimized LLVM IR (CUDA)");
+        "taichi_kernel_amdgpu_llvm_ir_optimized_{:04d}.ll",
+        "optimized LLVM IR (AMDGPU)");
     writer.write(module.get());
   }
 
@@ -237,8 +240,7 @@ std::unique_ptr<JITSession> create_llvm_jit_session_cuda(
   TI_ASSERT(arch == Arch::cuda);
   // https://docs.nvidia.com/cuda/nvvm-ir-spec/index.html#data-layout
   auto data_layout = llvm::DataLayout(
-      "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-"
-      "f64:64:64-v16:16:16-v32:32:32-v64:64:64-v128:128:128-n16:32:64");
+    "e-p:64:64-p1:64:64-p2:32:32-p3:32:32-p4:64:64-p5:32:32-p6:32:32-i64:64-v16:16-v24:32-v32:32-v48:64-v96:128-v192:256-v256:256-v512:512-v1024:1024-v2048:2048-n32:64-S32-A5-ni:7");
   return std::make_unique<JITSessionCUDA>(tlctx, config, data_layout);
 }
 #else

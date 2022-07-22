@@ -92,16 +92,16 @@ using uint64 = uint64_t;
 using float32 = float;
 using float64 = double;
 
-using i8 = int8;
-using i16 = int16;
-using i32 = int32;
-using i64 = int64;
-using u8 = uint8;
-using u16 = uint16;
-using u32 = uint32;
-using u64 = uint64;
-using f32 = float32;
-using f64 = float64;
+using i8 = int8_t;
+using i16 = int16_t;
+using i32 = int32_t;
+using i64 = int64_t;
+using u8 = uint8_t;
+using u16 = uint16_t;
+using u32 = uint32_t;
+using u64 = uint64_t;
+using f32 = float;
+using f64 = double;
 
 using uint8 = uint8_t;
 using Ptr = uint8 *;
@@ -698,15 +698,15 @@ struct NodeManager {
 extern "C" {
 
 void RuntimeContext_store_result(RuntimeContext *ctx, u64 ret, u32 idx) {
-  ctx->result_buffer[taichi_result_buffer_ret_value_id + idx] = ret;
+  //ctx->result_buffer[taichi_result_buffer_ret_value_id + idx] = ret;
 }
 
 void LLVMRuntime_profiler_start(LLVMRuntime *runtime, Ptr kernel_name) {
-  runtime->profiler_start(runtime->profiler, kernel_name);
+  //runtime->profiler_start(runtime->profiler, kernel_name);
 }
 
 void LLVMRuntime_profiler_stop(LLVMRuntime *runtime) {
-  runtime->profiler_stop(runtime->profiler);
+  //runtime->profiler_stop(runtime->profiler);
 }
 
 Ptr get_temporary_pointer(LLVMRuntime *runtime, u64 offset) {
@@ -714,39 +714,39 @@ Ptr get_temporary_pointer(LLVMRuntime *runtime, u64 offset) {
 }
 
 void runtime_retrieve_and_reset_error_code(LLVMRuntime *runtime) {
-  runtime->set_result(taichi_result_buffer_error_id, runtime->error_code);
-  runtime->error_code = 0;
+  //runtime->set_result(taichi_result_buffer_error_id, runtime->error_code);
+  //runtime->error_code = 0;
 }
 
 void runtime_retrieve_error_message(LLVMRuntime *runtime, int i) {
-  runtime->set_result(taichi_result_buffer_error_id,
-                      runtime->error_message_template[i]);
+  //runtime->set_result(taichi_result_buffer_error_id,
+  //                    runtime->error_message_template[i]);
 }
 
 void runtime_retrieve_error_message_argument(LLVMRuntime *runtime,
                                              int argument_id) {
-  runtime->set_result(taichi_result_buffer_error_id,
-                      runtime->error_message_arguments[argument_id]);
+ // runtime->set_result(taichi_result_buffer_error_id,
+ //                     runtime->error_message_arguments[argument_id]);
 }
 
 void runtime_ListManager_get_num_active_chunks(LLVMRuntime *runtime,
                                                ListManager *list_manager) {
-  runtime->set_result(taichi_result_buffer_runtime_query_id,
-                      list_manager->get_num_active_chunks());
+ // runtime->set_result(taichi_result_buffer_runtime_query_id,
+ //                     list_manager->get_num_active_chunks());
 }
 
-RUNTIME_STRUCT_FIELD_ARRAY(LLVMRuntime, node_allocators);
-RUNTIME_STRUCT_FIELD_ARRAY(LLVMRuntime, element_lists);
-RUNTIME_STRUCT_FIELD(LLVMRuntime, total_requested_memory);
+//RUNTIME_STRUCT_FIELD_ARRAY(LLVMRuntime, node_allocators);
+//RUNTIME_STRUCT_FIELD_ARRAY(LLVMRuntime, element_lists);
+//RUNTIME_STRUCT_FIELD(LLVMRuntime, total_requested_memory);
 
-RUNTIME_STRUCT_FIELD(NodeManager, free_list);
-RUNTIME_STRUCT_FIELD(NodeManager, recycled_list);
-RUNTIME_STRUCT_FIELD(NodeManager, data_list);
-RUNTIME_STRUCT_FIELD(NodeManager, free_list_used);
+//RUNTIME_STRUCT_FIELD(NodeManager, free_list);
+//RUNTIME_STRUCT_FIELD(NodeManager, recycled_list);
+//RUNTIME_STRUCT_FIELD(NodeManager, data_list);
+//RUNTIME_STRUCT_FIELD(NodeManager, free_list_used);
 
-RUNTIME_STRUCT_FIELD(ListManager, num_elements);
-RUNTIME_STRUCT_FIELD(ListManager, max_num_elements_per_chunk);
-RUNTIME_STRUCT_FIELD(ListManager, element_size);
+//RUNTIME_STRUCT_FIELD(ListManager, num_elements);
+//RUNTIME_STRUCT_FIELD(ListManager, max_num_elements_per_chunk);
+//RUNTIME_STRUCT_FIELD(ListManager, element_size);
 
 void taichi_assert(RuntimeContext *context, i32 test, const char *msg) {
   taichi_assert_runtime(context->runtime, test, msg);
@@ -869,13 +869,13 @@ Ptr LLVMRuntime::request_allocate_aligned(std::size_t size,
 void runtime_memory_allocate_aligned(LLVMRuntime *runtime,
                                      std::size_t size,
                                      std::size_t alignment) {
-  runtime->set_result(taichi_result_buffer_runtime_query_id,
-                      runtime->allocate_aligned(size, alignment));
+  //runtime->set_result(taichi_result_buffer_runtime_query_id,
+  //                    runtime->allocate_aligned(size, alignment));
 }
 
 void runtime_get_mem_req_queue(LLVMRuntime *runtime) {
-  runtime->set_result(taichi_result_buffer_ret_value_id,
-                      runtime->mem_req_queue);
+  //runtime->set_result(taichi_result_buffer_ret_value_id,
+  //                    runtime->mem_req_queue);
 }
 
 void runtime_initialize(
@@ -890,7 +890,7 @@ void runtime_initialize(
     void *_host_printf,
     void *_host_vsnprintf) {
   // bootstrap
-  auto vm_allocator = (vm_allocator_type)_vm_allocator;
+/*  auto vm_allocator = (vm_allocator_type)_vm_allocator;
   auto host_printf = (host_printf_type)_host_printf;
   auto host_vsnprintf = (host_vsnprintf_type)_host_vsnprintf;
   LLVMRuntime *runtime = nullptr;
@@ -929,7 +929,7 @@ void runtime_initialize(
       sizeof(RandState) * runtime->num_rand_states, taichi_page_size);
   for (int i = 0; i < runtime->num_rand_states; i++)
     initialize_rand_state(&runtime->rand_states[i], starting_rand_state + i);
-}
+*/}
 
 void runtime_initialize_snodes(LLVMRuntime *runtime,
                                std::size_t root_size,
@@ -941,7 +941,7 @@ void runtime_initialize_snodes(LLVMRuntime *runtime,
                                bool all_dense) {
   // For Metal runtime, we have to make sure that both the beginning address
   // and the size of the root buffer memory are aligned to page size.
-  runtime->root_mem_sizes[snode_tree_id] = rounded_size;
+/*  runtime->root_mem_sizes[snode_tree_id] = rounded_size;
   runtime->roots[snode_tree_id] = ptr;
   // runtime->request_allocate_aligned ready to use
   // initialize the root node element list
@@ -962,20 +962,20 @@ void runtime_initialize_snodes(LLVMRuntime *runtime,
   }
 
   runtime->element_lists[root_id]->append(&elem);
-}
+*/}
 
 void LLVMRuntime_initialize_thread_pool(LLVMRuntime *runtime,
                                         void *thread_pool,
                                         void *parallel_for) {
-  runtime->thread_pool = (Ptr)thread_pool;
-  runtime->parallel_for = (parallel_for_type)parallel_for;
+//  runtime->thread_pool = (Ptr)thread_pool;
+//  runtime->parallel_for = (parallel_for_type)parallel_for;
 }
 
 void runtime_NodeAllocator_initialize(LLVMRuntime *runtime,
                                       int snode_id,
                                       std::size_t node_size) {
-  runtime->node_allocators[snode_id] =
-      runtime->create<NodeManager>(runtime, node_size, 1024 * 16);
+//  runtime->node_allocators[snode_id] =
+//      runtime->create<NodeManager>(runtime, node_size, 1024 * 16);
 }
 
 void runtime_allocate_ambient(LLVMRuntime *runtime,
@@ -983,8 +983,8 @@ void runtime_allocate_ambient(LLVMRuntime *runtime,
                               std::size_t size) {
   // Do not use NodeManager for the ambient node since it will never be garbage
   // collected.
-  runtime->ambient_elements[snode_id] =
-      runtime->request_allocate_aligned(size, 128);
+//  runtime->ambient_elements[snode_id] =
+//      runtime->request_allocate_aligned(size, 128);
 }
 
 void mutex_lock_i32(Ptr mutex) {
