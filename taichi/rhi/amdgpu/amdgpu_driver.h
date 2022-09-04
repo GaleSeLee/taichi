@@ -3,7 +3,6 @@
 #include <mutex>
 
 #include "taichi/system/dynamic_loader.h"
-#include "taichi/rhi/AMDGPU/amdgpu_types.h"
 
 TLANG_NAMESPACE_BEGIN
 
