@@ -47,9 +47,13 @@ bool arch_is_cuda(Arch arch) {
   return arch == Arch::cuda;
 }
 
+bool arch_is_amdgpu(Arch arch) {
+  return arch == Arch::amdgpu;
+}
+
 bool arch_uses_llvm(Arch arch) {
   return (arch == Arch::x64 || arch == Arch::arm64 || arch == Arch::cuda ||
-          arch == Arch::dx12 || arch == Arch::wasm);
+          arch == Arch::dx12 || arch == Arch::wasm || arch == Arch::amdgpu);
 }
 
 bool arch_is_gpu(Arch arch) {

@@ -36,6 +36,10 @@
 #include "taichi/rhi/cuda/cuda_context.h"
 #endif
 
+#if defined(TI_WITH_AMDGPU)
+#include "taichi/rhi/amdgpu/amdgpu_context.h"
+#endif
+
 TI_NAMESPACE_BEGIN
 bool test_threading();
 

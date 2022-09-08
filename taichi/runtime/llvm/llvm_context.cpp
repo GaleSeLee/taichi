@@ -15,6 +15,9 @@
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Intrinsics.h"
 #include "llvm/IR/IntrinsicsNVPTX.h"
+#ifdef TI_WITH_AMDGPU
+#include "llvm/IR/IntrinsicsAMDGPU.h"
+#endif //TI_WITH_AMDGPU
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Type.h"
@@ -56,6 +59,10 @@
 
 #if defined(TI_WITH_CUDA)
 #include "taichi/rhi/cuda/cuda_context.h"
+#endif
+
+#if defined(TI_WITH_AMDGPU)
+#include "taichi/rhi/amdgpu/amdgpu_context.h"
 #endif
 
 namespace taichi {
@@ -101,7 +108,7 @@ TaichiLLVMContext::TaichiLLVMContext(CompileConfig *config, Arch arch)
     LLVMInitializeDirectXTargetInfo();
     LLVMInitializeDirectXAsmPrinter();
 #endif
-  } else {
+  } else if (arch == Arch::cuda) {
 #if defined(TI_WITH_CUDA)
     LLVMInitializeNVPTXTarget();
     LLVMInitializeNVPTXTargetMC();
@@ -110,6 +117,18 @@ TaichiLLVMContext::TaichiLLVMContext(CompileConfig *config, Arch arch)
 #else
     TI_NOT_IMPLEMENTED
 #endif
+  } else if (arch == Arch::amdgpu) {
+#if defined(TI_WITH_AMDGPU)
+    LLVMInitializeAMDGPUTarget();
+    LLVMInitializeAMDGPUTargetMC();
+    LLVMInitializeAMDGPUTargetInfo();
+    LLVMInitializeAMDGPUAsmPrinter();
+    LLVMInitializeAMDGPUAsmParser();
+#else
+    TI_NOT_IMPLEMENTED
+#endif
+  } else {
+    TI_NOT_IMPLEMENTED
   }
   jit = JITSession::create(this, config, arch);
   TI_TRACE("Taichi llvm context created.");
@@ -323,6 +342,57 @@ std::unique_ptr<llvm::Module> TaichiLLVMContext::module_from_file(
   auto ctx = get_this_thread_context();
   std::unique_ptr<llvm::Module> module = module_from_bitcode_file(
       fmt::format("{}/{}", runtime_lib_dir(), file), ctx);
+
+  
+  auto patch_intrinsic = [&](std::string name, Intrinsic::ID intrin,
+                              bool ret = true,
+                              std::vector<llvm::Type *> types = {},
+                              std::vector<llvm::Value *> extra_args = {}) {
+    auto func = module->getFunction(name);
+    if (!func) {
+      return;
+    }
+    func->deleteBody();
+    auto bb = llvm::BasicBlock::Create(*ctx, "entry", func);
+    IRBuilder<> builder(*ctx);
+    builder.SetInsertPoint(bb);
+    std::vector<llvm::Value *> args;
+    for (auto &arg : func->args())
+      args.push_back(&arg);
+    args.insert(args.end(), extra_args.begin(), extra_args.end());
+    if (ret) {
+      builder.CreateRet(builder.CreateIntrinsic(intrin, types, args));
+    } else {
+      builder.CreateIntrinsic(intrin, types, args);
+      builder.CreateRetVoid();
+    }
+    TaichiLLVMContext::mark_inline(func);
+  };
+
+  auto patch_atomic_add = [&](std::string name,
+                              llvm::AtomicRMWInst::BinOp op) {
+    auto func = module->getFunction(name);
+    if (!func) {
+      return;
+    }
+    func->deleteBody();
+    auto bb = llvm::BasicBlock::Create(*ctx, "entry", func);
+    IRBuilder<> builder(*ctx);
+    builder.SetInsertPoint(bb);
+    std::vector<llvm::Value *> args;
+    for (auto &arg : func->args())
+      args.push_back(&arg);
+#ifdef TI_LLVM_15
+    builder.CreateRet(builder.CreateAtomicRMW(
+        op, args[0], args[1], llvm::MaybeAlign(0),
+        llvm::AtomicOrdering::SequentiallyConsistent));
+#else
+    builder.CreateRet(builder.CreateAtomicRMW(
+        op, args[0], args[1], llvm::AtomicOrdering::SequentiallyConsistent));
+#endif
+    TaichiLLVMContext::mark_inline(func);
+  };
+
   if (arch_ == Arch::cuda) {
     module->setTargetTriple("nvptx64-nvidia-cuda");
 
@@ -338,55 +408,6 @@ std::unique_ptr<llvm::Module> TaichiLLVMContext::module_from_file(
       TaichiLLVMContext::mark_inline(func);
     }
 #endif
-
-    auto patch_intrinsic = [&](std::string name, Intrinsic::ID intrin,
-                               bool ret = true,
-                               std::vector<llvm::Type *> types = {},
-                               std::vector<llvm::Value *> extra_args = {}) {
-      auto func = module->getFunction(name);
-      if (!func) {
-        return;
-      }
-      func->deleteBody();
-      auto bb = llvm::BasicBlock::Create(*ctx, "entry", func);
-      IRBuilder<> builder(*ctx);
-      builder.SetInsertPoint(bb);
-      std::vector<llvm::Value *> args;
-      for (auto &arg : func->args())
-        args.push_back(&arg);
-      args.insert(args.end(), extra_args.begin(), extra_args.end());
-      if (ret) {
-        builder.CreateRet(builder.CreateIntrinsic(intrin, types, args));
-      } else {
-        builder.CreateIntrinsic(intrin, types, args);
-        builder.CreateRetVoid();
-      }
-      TaichiLLVMContext::mark_inline(func);
-    };
-
-    auto patch_atomic_add = [&](std::string name,
-                                llvm::AtomicRMWInst::BinOp op) {
-      auto func = module->getFunction(name);
-      if (!func) {
-        return;
-      }
-      func->deleteBody();
-      auto bb = llvm::BasicBlock::Create(*ctx, "entry", func);
-      IRBuilder<> builder(*ctx);
-      builder.SetInsertPoint(bb);
-      std::vector<llvm::Value *> args;
-      for (auto &arg : func->args())
-        args.push_back(&arg);
-#ifdef TI_LLVM_15
-      builder.CreateRet(builder.CreateAtomicRMW(
-          op, args[0], args[1], llvm::MaybeAlign(0),
-          llvm::AtomicOrdering::SequentiallyConsistent));
-#else
-      builder.CreateRet(builder.CreateAtomicRMW(
-          op, args[0], args[1], llvm::AtomicOrdering::SequentiallyConsistent));
-#endif
-      TaichiLLVMContext::mark_inline(func);
-    };
 
     patch_intrinsic("thread_idx", Intrinsic::nvvm_read_ptx_sreg_tid_x);
     patch_intrinsic("cuda_clock_i64", Intrinsic::nvvm_read_ptx_sreg_clock64);
@@ -477,6 +498,18 @@ std::unique_ptr<llvm::Module> TaichiLLVMContext::module_from_file(
     // runtime_module->print(llvm::errs(), nullptr);
   }
 
+  if (arch_ == Arch::amdgpu) {
+    module->setTargetTriple("amdgcn-amd-amdhsa");
+    patch_intrinsic("thread_idx", llvm::Intrinsic::amdgcn_workitem_id_x);
+    patch_intrinsic("block_idx", llvm::Intrinsic::amdgcn_workgroup_id_x);
+    // TODO (Gale)
+    // check the atomic intrinsic on amdgpu
+    patch_atomic_add("atomic_add_i32", llvm::AtomicRMWInst::Add);
+    patch_atomic_add("atomic_add_i64", llvm::AtomicRMWInst::Add);
+    patch_atomic_add("atomic_add_f64", llvm::AtomicRMWInst::FAdd);
+    patch_atomic_add("atomic_add_f32", llvm::AtomicRMWInst::FAdd);
+    link_module_with_amdgpu_libdevice(module);
+  }
   return module;
 }
 
@@ -511,6 +544,53 @@ void TaichiLLVMContext::link_module_with_cuda_libdevice(
       TI_INFO("Function {} not found", func_name);
     } else
       func->setLinkage(llvm::Function::InternalLinkage);
+  }
+}
+
+void TaichiLLVMContext::link_module_with_amdgpu_libdevice(
+    std::unique_ptr<llvm::Module> &module) {
+  TI_ASSERT(arch_ == Arch::amdgpu);
+  std::string libdevice_paths[] = {
+    "oclc_daz_opt_on",
+    "ocml",
+    "ockl",
+    "oclc_correctly_rounded_sqrt_off",
+    "oclc_correctly_rounded_sqrt_on",
+    "oclc_daz_opt_off",
+    "oclc_finite_only_off",
+    "oclc_finite_only_on",
+    "oclc_isa_version_1030",  
+    "oclc_unsafe_math_off",
+    "oclc_unsafe_math_on",
+    "oclc_wavefrontsize64_off"
+  };
+  for (auto &libdevice : libdevice_paths) {
+    // TODO (Gale)
+    // del the hardcode path
+    std::string bc_path = "/opt/rocm/amdgcn/bitcode/";
+    auto libdevice_module = 
+        module_from_bitcode_file(bc_path + libdevice + ".bc",
+        get_this_thread_context());
+    
+    std::vector<std::string> libdevice_function_names;
+    for (auto &f : *libdevice_module) {
+      if (!f.isDeclaration()) {
+        libdevice_function_names.push_back(f.getName().str());
+      }
+    }
+
+    // TODO (Gale) linkonce_odr
+    // Temporary solution
+    for (auto &f : libdevice_module->functions()) {
+      auto func_ = module->getFunction(f.getName());
+      if (!func_ && starts_with(f.getName().lower(), "__" + libdevice))
+        f.setLinkage(llvm::Function::CommonLinkage);
+    }
+    for (auto func_name : libdevice_function_names) {
+      auto func = module->getFunction(func_name);
+      if (func) 
+        func->setLinkage(llvm::Function::InternalLinkage);
+    }
   }
 }
 
@@ -815,6 +895,20 @@ void TaichiLLVMContext::update_runtime_jit_module(
         // set declaration-only functions as internal linking to avoid
         // duplicated symbols and to remove external symbol dependencies such as
         // std::sin
+        f.setLinkage(llvm::Function::PrivateLinkage);
+    }
+  }
+
+  if (arch_ == Arch::amdgpu) {
+    for (auto &f : *module) {
+      bool is_kernel = false;
+      const std::string func_name = f.getName().str();
+      if (starts_with(func_name, "runtime_")) {
+        // compile runtime_amdgpu with clang or hipcc
+        // we don't need to mark function as a amdgpu kernel
+        is_kernel = true;
+      }
+      if (!is_kernel && !f.isDeclaration())
         f.setLinkage(llvm::Function::PrivateLinkage);
     }
   }

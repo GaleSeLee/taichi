@@ -24,6 +24,10 @@
 #include "taichi/rhi/cuda/cuda_driver.h"
 #endif
 
+#if defined(TI_WITH_AMDGPU)
+#include "taichi/rhi/amdgpu/amdgpu_driver.h"
+#endif
+
 #ifdef TI_WITH_VULKAN
 #include "taichi/rhi/vulkan/vulkan_loader.h"
 #endif

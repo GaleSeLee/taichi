@@ -11,6 +11,10 @@
 #include "taichi/rhi/cuda/cuda_context.h"
 #endif
 
+#if defined(TI_WITH_AMDGPU)
+#include "taichi/rhi/amdgpu/amdgpu_context.h"
+#endif
+
 namespace taichi {
 namespace lang {
 namespace {
@@ -87,6 +91,24 @@ LlvmRuntimeExecutor::LlvmRuntimeExecutor(CompileConfig &config,
 #if defined(TI_WITH_DX12)
     // FIXME: set value based on DX12.
     config.max_block_dim = 1024;
+#endif
+  } else if (config.arch == Arch::amdgpu) {
+#if defined(TI_WITH_AMDGPU)
+    // TODO (Gale)
+    // alter block to workgroup
+    int num_CUs{1};
+    AMDGPUDriver::get_instance().device_get_attribute(
+      &num_CUs, HIP_DEVICE_ATTRIBUTE_MULTIPROCESSOR_COUNT, nullptr);
+    int query_max_block_dim{1024};
+    AMDGPUDriver::get_instance().device_get_attribute(
+      &query_max_block_dim, HIP_DEVICE_ATTRIBUTE_MAX_BLOCK_DIM_X, nullptr);
+    int query_max_block_per_cu{32};
+    if (config.max_block_dim == 0) {
+      config.max_block_dim = query_max_block_dim;
+    }
+    if (config.saturating_grid_dim == 0) {
+      config.staturating_grid_dim = num_CUs * query_max_block_per_cu * 2;
+    }
 #endif
   }
 
@@ -179,6 +201,13 @@ void LlvmRuntimeExecutor::synchronize() {
     CUDADriver::get_instance().stream_synchronize(nullptr);
 #else
     TI_ERROR("No CUDA support");
+#endif
+  }
+  if (config_ -> arch == Arch::amdgpu) {
+#if defined(TI_WITH_AMDGPU)
+    AMDGPUDriver::get_instance().stream_synchronize(nullptr);
+#else
+    TI_ERROR("No AMDGPU support");
 #endif
   }
 }

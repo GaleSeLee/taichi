@@ -358,7 +358,7 @@ FunctionType AMDGPUModuleToFunctionConverter::convert(
         for (const auto &task : tasks) {
             llvm::Function *func = mod->getFunction(task.name);
             TI_ASSERT(func);
-            tlctx_->mark_function_as_amdgpu_kernel(func);
+            func->setCallingConv(llvm::CallingConv::AMDGPU_KERNEL);
         }
         auto jit = tlctx_->jit.get();
         amdgpu_modules.push_back(

@@ -12,6 +12,9 @@
 #if defined(TI_WITH_CUDA)
 #include "taichi/codegen/cuda/codegen_cuda.h"
 #endif
+#if defined(TI_WITH_AMDGPU)
+#include "taichi/codegen/amdgpu/codegen_amdgpu.h"
+#endif
 #include "taichi/system/timer.h"
 #include "taichi/ir/analysis.h"
 #include "taichi/ir/transforms.h"
@@ -48,6 +51,12 @@ std::unique_ptr<KernelCodeGen> KernelCodeGen::create(Arch arch,
 #else
     TI_NOT_IMPLEMENTED
 #endif
+  } else if (arch == Arch::amdgpu) {
+#if define(TI_WITH_AMDGPU)
+    return std::make_unique<KernelCodeGenAMDGPU>(kernel, stmt);
+#else 
+    TI_NOT_IMPLEMENTED
+#endif // TI_WITH_AMDGPU
   } else {
     TI_NOT_IMPLEMENTED
   }
