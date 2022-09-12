@@ -17,3 +17,14 @@ endfunction()
 foreach(arch IN LISTS HOST_ARCH CUDA_ARCH DX12_ARCH)
   compile_llvm_runtime(${arch})
 endforeach()
+
+if (TI_WITH_AMDGPU)
+    message(STATUS "Compiling LLVM byte code file for arch AMDGPU_ARCH")
+    add_custom_target(
+        "generate_llvm_runtime_amdgpu"
+        COMMAND hipcc ${CLANG_OSX_FLAGS} -c runtime_amdgpu.cpp -o "runtime_amdgpu.bc" -fno-exceptions -emit-llvm --cuda-device-only --offload-arch=gfx1030 -std=c++17 -O0 -I ${PROJECT_SOURCE_DIR} -I/opt/rocm/include;
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+    )
+    add_dependencies(${CORE_LIBRARY_NAME} "generate_llvm_runtime_amdgpu")
+    install(FILES "${CMAKE_SOURCE_DIR}/taichi/runtime/llvm/runtime_module/runtime_amdgpu.bc" DESTINATION ${CMAKE_INSTALL_PREFIX}/python/taichi/_lib/runtime)
+endif()
