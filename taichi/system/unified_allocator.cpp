@@ -4,8 +4,13 @@
 #include "taichi/rhi/cuda/cuda_driver.h"
 #include "taichi/rhi/cuda/cuda_context.h"
 #include "taichi/rhi/cuda/cuda_device.h"
-
 #endif
+#if defined(TI_WITH_AMDGPU)
+#include "taichi/rhi/amdgpu/amdgpu_driver.h"
+#include "taichi/rhi/amdgpu/amdgpu_context.h"
+#include "taichi/rhi/amdgpu/amdgpu_device.h"
+#endif
+
 #include "taichi/util/lang_util.h"
 #include "taichi/system/unified_allocator.h"
 #include "taichi/system/virtual_memory.h"

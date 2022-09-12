@@ -27,6 +27,10 @@ namespace cuda {
 class CudaDevice;
 }  // namespace cuda
 
+namespace amdgpu {
+class AMDGPUDevice;
+}
+
 namespace cpu {
 class CpuDevice;
 }  // namespace cpu

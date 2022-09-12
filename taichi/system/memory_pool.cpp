@@ -26,6 +26,13 @@ MemoryPool::MemoryPool(Arch arch, Device *device)
                                              CU_STREAM_NON_BLOCKING);
   }
 #endif
+
+#if defined(TI_WITH_AMDGPU)
+  if (use_amdgpu_stream && arch_ == Arch::amdgpu) {
+    AMDGPUDriver::get_instance().stream_create(&amdgpu_stream,
+                                               HIP_STREAM_NON_BLOCKING);
+  }
+#endif
   th = std::make_unique<std::thread>([this] { this->daemon(); });
 }
 
@@ -63,6 +70,15 @@ T MemoryPool::fetch(volatile void *ptr) {
 #else
     TI_NOT_IMPLEMENTED
 #endif
+  } else if (use_amdgpu_stream && arch_ == Arch::amdgpu) {
+#if TI_WITH_AMDGPU
+    AMDGPUDriver::get_instance().stream_synchronize(amdgpu_stream);
+    AMDGPUDriver::get_instance().memcpy_device_to_host_async(
+        &ret, (void *)ptr, sizeof(T), amdgpu_stream);
+    AMDGPUDriver::get_instance().stream_synchronize(amdgpu_stream);
+#else
+    TI_NOT_IMPLEMENTED
+#endif
   } else {
     ret = *(T *)ptr;
   }
@@ -76,6 +92,14 @@ void MemoryPool::push(volatile T *dest, const T &val) {
     CUDADriver::get_instance().memcpy_host_to_device_async(
         (void *)(dest), (void *)&val, sizeof(T), cuda_stream);
     CUDADriver::get_instance().stream_synchronize(cuda_stream);
+#else
+    TI_NOT_IMPLEMENTED
+#endif
+  } else if (use_amdgpu_stream && arch_ == Arch::amdgpu) {
+#if TI_WITH_AMDGPU
+    AMDGPUDriver::get_instance().memcpy_host_to_device_async(
+        (void *)(dest), (void *)&val, sizeof(T), amdgpu_stream);
+    AMDGPUDriver::get_instance().stream_synchronize(amdgpu_stream);
 #else
     TI_NOT_IMPLEMENTED
 #endif

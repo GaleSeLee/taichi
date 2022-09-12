@@ -15,6 +15,10 @@
 #include "taichi/codegen/cuda/codegen_cuda.h"
 #endif
 
+#if defined(TI_WITH_AMDGPU)
+#include "taichi/codegen/amdgpu/codegen_amdgpu.h"
+#endif
+
 #if defined(TI_WITH_DX12)
 #include "taichi/runtime/dx12/aot_module_builder_impl.h"
 #include "taichi/codegen/dx12/codegen_dx12.h"
@@ -108,6 +112,10 @@ std::unique_ptr<AotModuleBuilder> LlvmProgramImpl::make_aot_module_builder() {
   if (config->arch == Arch::cuda) {
     return std::make_unique<cuda::AotModuleBuilderImpl>(this);
   }
+#endif
+
+#if defined(TI_WITH_AMDGPU)
+  TI_NOT_IMPLEMENTED;
 #endif
 
 #if defined(TI_WITH_DX12)
