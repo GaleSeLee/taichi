@@ -837,346 +837,70 @@ int32 cttz_i32(i32 val) {
 }
 
 __host__ __device__
-int32 cuda_compute_capability() {
-  return 0;
+void block_barrier() {
 }
 
 __host__ __device__
-int32 cuda_ballot(bool bit) {
-  return 0;
+void warp_barrier(uint32 mask) {
 }
 
 __host__ __device__
-i32 cuda_shfl_down_sync_i32(u32 mask, i32 val, i32 delta, int width) {
-  return 0;
+void block_memfence() {
 }
 
 __host__ __device__
-i32 cuda_shfl_down_i32(i32 delta, i32 val, int width) {
-  return 0;
-}
-
-__host__ __device__
-f32 cuda_shfl_down_sync_f32(u32 mask, f32 val, i32 delta, int width) {
-  return 0;
-}
-
-__host__ __device__
-f32 cuda_shfl_down_f32(i32 delta, f32 val, int width) {
-  return 0;
-}
-
-#ifdef ARCH_cuda
-__host__ __device__
-#endif
- i32 cuda_shfl_xor_sync_i32(u32 mask, i32 val, i32 delta, int width) {
-  return 0;
-}
-
-#ifdef ARCH_cuda
-__host__ __device__
-#endif
- i32 cuda_shfl_up_sync_i32(u32 mask, i32 val, i32 delta, int width) {
-  return 0;
-}
-
-#ifdef ARCH_cuda
-__host__ __device__
-#endif
- f32 cuda_shfl_up_sync_f32(u32 mask, f32 val, i32 delta, int width) {
-  return 0;
-}
-
-#ifdef ARCH_cuda
-__host__ __device__
-#endif
- i32 cuda_shfl_sync_i32(u32 mask, i32 val, i32 delta, int width) {
-  return 0;
-}
-
-#ifdef ARCH_cuda
-__host__ __device__
-#endif
- f32 cuda_shfl_sync_f32(u32 mask, f32 val, i32 delta, int width) {
-  return 0;
-}
-
-#ifdef ARCH_cuda
-__host__ __device__
-#endif
- bool cuda_all_sync(u32 mask, bool bit) {
-  return false;
-}
-
-#ifdef ARCH_cuda
-__host__ __device__
-#endif
- int32 cuda_all_sync_i32(u32 mask, int32 predicate) {
-  return (int32)cuda_all_sync(mask, (bool)predicate);
-}
-
-#ifdef ARCH_cuda
-__host__ __device__
-#endif
- bool cuda_any_sync(u32 mask, bool bit) {
-  return false;
-}
-
-#ifdef ARCH_cuda
-__host__ __device__
-#endif
- int32 cuda_any_sync_i32(u32 mask, int32 predicate) {
-  return (int32)cuda_any_sync(mask, (bool)predicate);
-}
-
-#ifdef ARCH_cuda
-__host__ __device__
-#endif
- bool cuda_uni_sync(u32 mask, bool bit) {
-  return false;
-}
-
-#ifdef ARCH_cuda
-__host__ __device__
-#endif
- int32 cuda_uni_sync_i32(u32 mask, int32 predicate) {
-  return (int32)cuda_uni_sync(mask, (bool)predicate);
-}
-
-#ifdef ARCH_cuda
-__host__ __device__
-#endif
- int32 cuda_ballot_sync(int32 mask, bool bit) {
-  return 0;
-}
-
-#ifdef ARCH_cuda
-__host__ __device__
-#endif
- int32 cuda_ballot_i32(int32 predicate) {
-  return cuda_ballot_sync(UINT32_MAX, (bool)predicate);
-}
-
-#ifdef ARCH_cuda
-__host__ __device__
-#endif
- int32 cuda_ballot_sync_i32(u32 mask, int32 predicate) {
-  return cuda_ballot_sync(mask, (bool)predicate);
-}
-
-#ifdef ARCH_cuda
-__host__ __device__
-#endif
- uint32 cuda_match_any_sync_i32(u32 mask, i32 value) {
-  return 0;
-}
-
-#ifdef ARCH_cuda
-__host__ __device__
-#endif
- u32 cuda_match_all_sync_i32(u32 mask, i32 value) {
-#if ARCH_cuda
-  //u32 ret;
-  //asm volatile("match.all.sync.b32  %0, %1, %2;"
-  //             : "=r"(ret)
-  //             : "r"(value), "r"(mask));
-  //return ret;
-  return 0;
-#else
-  return 0;
-#endif
-}
-
-#ifdef ARCH_cuda
-__host__ __device__
-#endif
- uint32 cuda_match_any_sync_i64(u32 mask, i64 value) {
-#if ARCH_cuda
-  //u32 ret;
-  //asm volatile("match.any.sync.b64  %0, %1, %2;"
-  //             : "=r"(ret)
-  //             : "l"(value), "r"(mask));
-  //return ret;
-  // Gale
-  return 0;
-#else
-  return 0;
-#endif
-}
-
-#if ARCH_cuda
-__host__ __device__ uint32 cuda_active_mask() {
-  //unsigned int mask;
-  //asm volatile("activemask.b32 %0;" : "=r"(mask));
-  //return mask;
-  // Gale
-  return 0;
-}
-#else
-uint32 cuda_active_mask() {
-  return 0;
-}
-#endif
-
-#ifdef ARCH_cuda
-__host__ __device__
-#endif
- void block_barrier() {
-}
-
-#ifdef ARCH_cuda
-__host__ __device__
-#endif
- void warp_barrier(uint32 mask) {
-}
-
-#ifdef ARCH_cuda
-__host__ __device__
-#endif
- void block_memfence() {
-}
-
-#ifdef ARCH_cuda
-__host__ __device__
-#endif
- void grid_memfence() {
+void grid_memfence() {
 }
 
 // these trivial functions are needed by the DEFINE_REDUCTION macro
-#ifdef ARCH_cuda
 __host__ __device__
-#endif
- i32 op_add_i32(i32 a, i32 b) {
+i32 op_add_i32(i32 a, i32 b) {
   return a + b;
 }
-#ifdef ARCH_cuda
 __host__ __device__
-#endif
- f32 op_add_f32(f32 a, f32 b) {
+f32 op_add_f32(f32 a, f32 b) {
   return a + b;
 }
 
-#ifdef ARCH_cuda
 __host__ __device__
-#endif
- i32 op_min_i32(i32 a, i32 b) {
+i32 op_min_i32(i32 a, i32 b) {
   return std::min(a, b);
 }
-#ifdef ARCH_cuda
 __host__ __device__
-#endif
- f32 op_min_f32(f32 a, f32 b) {
+f32 op_min_f32(f32 a, f32 b) {
   return std::min(a, b);
 }
 
-#ifdef ARCH_cuda
 __host__ __device__
-#endif
- i32 op_max_i32(i32 a, i32 b) {
+i32 op_max_i32(i32 a, i32 b) {
   return std::max(a, b);
 }
-#ifdef ARCH_cuda
 __host__ __device__
-#endif
- f32 op_max_f32(f32 a, f32 b) {
+f32 op_max_f32(f32 a, f32 b) {
   return std::max(a, b);
 }
 
-#ifdef ARCH_cuda
 __host__ __device__
-#endif
- i32 op_and_i32(i32 a, i32 b) {
+i32 op_and_i32(i32 a, i32 b) {
   return a & b;
 }
-#ifdef ARCH_cuda
 __host__ __device__
-#endif
- i32 op_or_i32(i32 a, i32 b) {
+i32 op_or_i32(i32 a, i32 b) {
   return a | b;
 }
-#ifdef ARCH_cuda
 __host__ __device__
-#endif
- i32 op_xor_i32(i32 a, i32 b) {
+i32 op_xor_i32(i32 a, i32 b) {
   return a ^ b;
 }
 
-#ifdef ARCH_cuda
-#define DEFINE_REDUCTION(op, dtype)                                                      \
-__host__ __device__ dtype warp_reduce_##op##_##dtype(uint32_t mask, dtype val) {         \
-    for (int offset = 16; offset > 0; offset /= 2)                                       \
-      val = op_##op##_##dtype(                                                           \
-          val, cuda_shfl_down_sync_##dtype(mask, val, offset, 31));                      \
-    return val;                                                                          \
-  }                                                                                      \
-__host__ __device__ dtype reduce_##op##_##dtype(dtype *result, dtype val) {              \
-    uint32_t mask = cuda_active_mask();                                                  \
-    if (mask != 0xFFFFFFFF) {                                                            \
-      atomic_##op##_##dtype(result, val);                                                \
-    } else {                                                                             \
-      dtype warp_result = warp_reduce_##op##_##dtype(0xFFFFFFFF, val);                   \
-      if ((thread_idx() & (warp_size() - 1)) == 0) {                                     \
-        atomic_##op##_##dtype(result, warp_result);                                      \
-      }                                                                                  \
-    }                                                                                    \
-    return val;                                                                          \
-  }
-#else
-#define DEFINE_REDUCTION(op, dtype)                                                      \
-dtype warp_reduce_##op##_##dtype(uint32_t mask, dtype val) {                             \
-    for (int offset = 16; offset > 0; offset /= 2)                                       \
-      val = op_##op##_##dtype(                                                           \
-          val, cuda_shfl_down_sync_##dtype(mask, val, offset, 31));                      \
-    return val;                                                                          \
-  }                                                                                      \
-dtype reduce_##op##_##dtype(dtype *result, dtype val) {                                  \
-    uint32_t mask = cuda_active_mask();                                                  \
-    if (mask != 0xFFFFFFFF) {                                                            \
-      atomic_##op##_##dtype(result, val);                                                \
-    } else {                                                                             \
-      dtype warp_result = warp_reduce_##op##_##dtype(0xFFFFFFFF, val);                   \
-      if ((thread_idx() & (warp_size() - 1)) == 0) {                                     \
-        atomic_##op##_##dtype(result, warp_result);                                      \
-      }                                                                                  \
-    }                                                                                    \
-    return val;                                                                          \
-  }
-#endif
-
-DEFINE_REDUCTION(add, i32);
-DEFINE_REDUCTION(add, f32);
-
-DEFINE_REDUCTION(min, i32);
-DEFINE_REDUCTION(min, f32);
-
-DEFINE_REDUCTION(max, i32);
-DEFINE_REDUCTION(max, f32);
-
-DEFINE_REDUCTION(and, i32);
-DEFINE_REDUCTION(or, i32);
-DEFINE_REDUCTION(xor, i32);
-
-// "Element", "component" are different concepts
-
-#ifdef ARCH_cuda
 __host__ __device__
-#endif
- void clear_list(LLVMRuntime *runtime, StructMeta *parent, StructMeta *child) {
+void clear_list(LLVMRuntime *runtime, StructMeta *parent, StructMeta *child) {
   auto child_list = runtime->element_lists[child->snode_id];
   child_list->clear();
 }
 
-/*
- * The element list of a SNode, maintains pointers to its instances, and
- * instances' parents' coordinates
- */
-
-// For the root node there is only one container,
-// therefore we use a special kernel for more parallelism.
-#ifdef ARCH_cuda
 __host__ __device__
-#endif
- void element_listgen_root(LLVMRuntime *runtime,
+void element_listgen_root(LLVMRuntime *runtime,
                           StructMeta *parent,
                           StructMeta *child) {
   // If there's just one element in the parent list, we need to use the blocks
@@ -1225,10 +949,8 @@ __host__ __device__
   }
 }
 
-#ifdef ARCH_cuda
 __host__ __device__
-#endif
- void element_listgen_nonroot(LLVMRuntime *runtime,
+void element_listgen_nonroot(LLVMRuntime *runtime,
                              StructMeta *parent,
                              StructMeta *child) {
   auto parent_list = runtime->element_lists[parent->snode_id];
@@ -1240,7 +962,7 @@ __host__ __device__
   auto parent_lookup_element = parent->lookup_element;
   auto child_get_num_elements = child->get_num_elements;
   auto child_from_parent_element = child->from_parent_element;
-#if ARCH_cuda
+#if ARCH_amdgpu
   // Each block processes a slice of a parent container
   int i_start = block_idx();
   int i_step = grid_dim();
@@ -1284,41 +1006,6 @@ __host__ __device__
 
 using BlockTask = void(RuntimeContext *, char *, Element *, int, int);
 
-struct cpu_block_task_helper_context {
-  RuntimeContext *context;
-  BlockTask *task;
-  ListManager *list;
-  int element_size;
-  int element_split;
-  std::size_t tls_buffer_size;
-};
-
-// TODO: To enforce inlining, we need to create in LLVM a new function that
-// calls block_helper and the BLS xlogues, and pass that function to the
-// scheduler.
-
-// TODO: TLS should be directly passed to the scheduler, so that it lives
-// with the threads (instead of blocks).
-
-void cpu_struct_for_block_helper(void *ctx_, int thread_id, int i) {
-  auto ctx = (cpu_block_task_helper_context *)(ctx_);
-  int element_id = i / ctx->element_split;
-  int part_size = ctx->element_size / ctx->element_split;
-  int part_id = i % ctx->element_split;
-  auto &e = ctx->list->get<Element>(element_id);
-  int lower = e.loop_bounds[0] + part_id * part_size;
-  int upper = e.loop_bounds[0] + (part_id + 1) * part_size;
-  upper = std::min(upper, e.loop_bounds[1]);
-  alignas(8) char tls_buffer[ctx->tls_buffer_size];
-
-  RuntimeContext this_thread_context = *ctx->context;
-  this_thread_context.cpu_thread_id = thread_id;
-  if (lower < upper) {
-    (*ctx->task)(&this_thread_context, tls_buffer,
-                 &ctx->list->get<Element>(element_id), lower, upper);
-  }
-}
-
 __host__ __device__ void parallel_struct_for(RuntimeContext *context,
                          int snode_id,
                          int element_size,
@@ -1328,7 +1015,7 @@ __host__ __device__ void parallel_struct_for(RuntimeContext *context,
                          int num_threads) {
   auto list = (context->runtime)->element_lists[snode_id];
   auto list_tail = list->size();
-#if ARCH_cuda
+#if ARCH_amdgpu
   int i = block_idx();
   // Note: CUDA requires compile-time constant local array sizes.
   // We use "1" here and modify it during codegen to tls_buffer_size.
@@ -1380,64 +1067,6 @@ struct range_task_helper_context {
   int step;
 };
 
-void cpu_parallel_range_for_task(void *range_context,
-                                 int thread_id,
-                                 int task_id) {
-  auto ctx = *(range_task_helper_context *)range_context;
-  alignas(8) char tls_buffer[ctx.tls_size];
-  auto tls_ptr = &tls_buffer[0];
-  if (ctx.prologue)
-    ctx.prologue(ctx.context, tls_ptr);
-
-  RuntimeContext this_thread_context = *ctx.context;
-  this_thread_context.cpu_thread_id = thread_id;
-  if (ctx.step == 1) {
-    int block_start = ctx.begin + task_id * ctx.block_size;
-    int block_end = std::min(block_start + ctx.block_size, ctx.end);
-    for (int i = block_start; i < block_end; i++) {
-      ctx.body(&this_thread_context, tls_ptr, i);
-    }
-  } else if (ctx.step == -1) {
-    int block_start = ctx.end - task_id * ctx.block_size;
-    int block_end = std::max(ctx.begin, block_start * ctx.block_size);
-    for (int i = block_start - 1; i >= block_end; i--) {
-      ctx.body(&this_thread_context, tls_ptr, i);
-    }
-  }
-  if (ctx.epilogue)
-    ctx.epilogue(ctx.context, tls_ptr);
-}
-
-void cpu_parallel_range_for(RuntimeContext *context,
-                            int num_threads,
-                            int begin,
-                            int end,
-                            int step,
-                            int block_dim,
-                            range_for_xlogue prologue,
-                            RangeForTaskFunc *body,
-                            range_for_xlogue epilogue,
-                            std::size_t tls_size) {
-  range_task_helper_context ctx;
-  ctx.context = context;
-  ctx.prologue = prologue;
-  ctx.tls_size = tls_size;
-  ctx.body = body;
-  ctx.epilogue = epilogue;
-  ctx.begin = begin;
-  ctx.end = end;
-  ctx.step = step;
-  if (step != 1 && step != -1) {
-    taichi_printf(context->runtime, "step must not be %d\n", step);
-    exit(-1);
-  }
-  ctx.block_size = block_dim;
-  auto runtime = context->runtime;
-  runtime->parallel_for(runtime->thread_pool,
-                        (end - begin + block_dim - 1) / block_dim, num_threads,
-                        &ctx, cpu_parallel_range_for_task);
-}
-
 __host__ __device__ void gpu_parallel_range_for(RuntimeContext *context,
                             int begin,
                             int end,
@@ -1473,56 +1102,6 @@ struct mesh_task_helper_context {
   int block_size;
 };
 
-void cpu_parallel_mesh_for_task(void *range_context,
-                                int thread_id,
-                                int task_id) {
-  auto ctx = *(mesh_task_helper_context *)range_context;
-  alignas(8) char tls_buffer[ctx.tls_size];
-  auto tls_ptr = &tls_buffer[0];
-
-  RuntimeContext this_thread_context = *ctx.context;
-  this_thread_context.cpu_thread_id = thread_id;
-
-  int block_start = task_id * ctx.block_size;
-  int block_end = std::min(block_start + ctx.block_size, ctx.num_patches);
-
-  for (int idx = block_start; idx < block_end; idx++) {
-    if (ctx.prologue)
-      ctx.prologue(ctx.context, tls_ptr, idx);
-    ctx.body(&this_thread_context, tls_ptr, idx);
-    if (ctx.epilogue)
-      ctx.epilogue(ctx.context, tls_ptr, idx);
-  }
-}
-
-void cpu_parallel_mesh_for(RuntimeContext *context,
-                           int num_threads,
-                           int num_patches,
-                           int block_dim,
-                           mesh_for_xlogue prologue,
-                           RangeForTaskFunc *body,
-                           mesh_for_xlogue epilogue,
-                           std::size_t tls_size) {
-  mesh_task_helper_context ctx;
-  ctx.context = context;
-  ctx.prologue = prologue;
-  ctx.tls_size = tls_size;
-  ctx.body = body;
-  ctx.epilogue = epilogue;
-  ctx.num_patches = num_patches;
-  if (block_dim == 0) {
-    // adaptive block dim
-    // ensure each thread has at least ~32 tasks for load balancing
-    // and each task has at least 512 items to amortize scheduler overhead
-    block_dim = std::min(512, std::max(1, num_patches / (num_threads * 32)));
-  }
-  ctx.block_size = block_dim;
-  auto runtime = context->runtime;
-  runtime->parallel_for(runtime->thread_pool,
-                        (num_patches + block_dim - 1) / block_dim, num_threads,
-                        &ctx, cpu_parallel_mesh_for_task);
-}
-
 __host__ __device__ void gpu_parallel_mesh_for(RuntimeContext *context,
                            int num_patches,
                            mesh_for_xlogue prologue,
@@ -1541,7 +1120,7 @@ __host__ __device__ void gpu_parallel_mesh_for(RuntimeContext *context,
 }
 
 __host__ __device__ i32 linear_thread_idx(RuntimeContext *context) {
-#if ARCH_cuda
+#if ARCH_amdgpu
   return block_idx() * block_dim() + thread_idx();
 #else
   return context->cpu_thread_id;
@@ -1554,10 +1133,8 @@ __host__ __device__ i32 linear_thread_idx(RuntimeContext *context) {
 #include "node_root.h"
 #include "node_bitmasked.h"
 
-#ifdef ARCH_cuda
 __host__ __device__
-#endif
- void ListManager::touch_chunk(int chunk_id) {
+void ListManager::touch_chunk(int chunk_id) {
   taichi_assert_runtime(runtime, chunk_id < max_num_chunks,
                         "List manager out of chunks.");
   if (!chunks[chunk_id]) {
@@ -1573,10 +1150,8 @@ __host__ __device__
   }
 }
 
-#ifdef ARCH_cuda
 __host__ __device__
-#endif
- void ListManager::append(void *data_ptr) {
+void ListManager::append(void *data_ptr) {
   auto ptr = allocate();
   // std::memcpy(ptr, data_ptr, element_size);
   for (int ii = 0; ii < element_size; ii++) {
@@ -1584,10 +1159,8 @@ __host__ __device__
   }
 }
 
-#ifdef ARCH_cuda
 __host__ __device__
-#endif
- Ptr ListManager::allocate() {
+Ptr ListManager::allocate() {
   auto i = reserve_new_element();
   return get_element_ptr(i);
 }
@@ -1757,10 +1330,8 @@ struct printf_helper {
 
 template <typename... Args>
 void taichi_printf(LLVMRuntime *runtime, const char *format, Args &&...args) {
-#if ARCH_cuda
-  printf_helper helper;
-  helper.push_back(std::forward<Args>(args)...);
-  cuda_vprintf((Ptr)format, helper.ptr());
+#if ARCH_amdgpu
+  // TODO
 #else
   runtime->host_printf(format, args...);
 #endif
@@ -1877,98 +1448,3 @@ f64 rounding_prepare_f64(f64 f) {
   return f + delta;
 }
 }
-
-namespace {
-i32 kWasmPrintBufferSize = 1024 * 1024;
-}
-
-extern "C" {
-// The input means starting address of RuntimeContext, which should be set to
-// '__heap_base' to avoid conflicts with C++ stack data which is stored in
-// memory. The function returns starting address of root buffer. The print
-// buffer locates just before RuntimeContext (8MB). Here is an illustration for
-// proper memory layout in WASM:
-// clang-format off
-// ━━━━━━━┳━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━
-//  Print ┃▄ RuntimeContext ┃  ▄ Runtime ▄  ┃ RandState[0] ┃ Root Buffer ...
-// ━━━━━━━┻│━━━━━━━━━━━━━━━━▲━━│━━━━━━━━━│━━▲━━━━━━━━━━━━━━▲━━━━━━━━━━━━━━━━━━━
-//         └────────────────┘  │         └──┘              │
-//                             └───────────────────────────┘
-// clang-format on
-i32 wasm_materialize(RuntimeContext *context) {
-  context->runtime = (LLVMRuntime *)((size_t)context + sizeof(RuntimeContext));
-  context->runtime->rand_states =
-      (RandState *)((size_t)context->runtime + sizeof(LLVMRuntime));
-  // set random seed to (1, 0, 0, 0)
-  context->runtime->rand_states[0].x = 1;
-  // TODO: remove hard coding on root id 0(SNodeTree::kFirstID)
-  context->runtime->roots[0] =
-      (Ptr)((size_t)context->runtime->rand_states + sizeof(RandState));
-  return (i32)(size_t)context->runtime->roots[0];
-}
-
-// Memory layout for Print section:
-// i32 total_print_character_num;
-// struct {
-//    int type;  // 0 for i32, 1 for f32, 2 for char (i8)
-//    union {
-//      i32 i;
-//      f32 f;
-//      char c[4];
-//    } data;
-//} wasm_buffer_buffer[kWasmPrintBufferSize];
-void wasm_set_print_buffer(RuntimeContext *context, Ptr buffer) {
-  context->runtime->wasm_print_buffer = buffer;
-}
-
-void wasm_print_i32(RuntimeContext *context, i32 value) {
-  Ptr buffer = context->runtime->wasm_print_buffer;
-  if (buffer == nullptr)
-    return;
-  i32 total_cnt = ((i32 *)buffer)[0]++;
-  i32 print_pos = total_cnt % kWasmPrintBufferSize;
-  ((i32 *)buffer)[print_pos * 2 + 1] = 0;  // 0 for i32
-  ((i32 *)buffer)[print_pos * 2 + 2] = value;
-}
-
-void wasm_print_f32(RuntimeContext *context, f32 value) {
-  Ptr buffer = context->runtime->wasm_print_buffer;
-  if (buffer == nullptr)
-    return;
-  i32 total_cnt = ((i32 *)buffer)[0]++;
-  i32 print_pos = total_cnt % kWasmPrintBufferSize;
-  ((i32 *)buffer)[print_pos * 2 + 1] = 1;  // 1 for f32
-  ((f32 *)buffer)[print_pos * 2 + 2] = value;
-}
-
-void wasm_print_char(RuntimeContext *context,
-                     i8 value0,
-                     i8 value1,
-                     i8 value2,
-                     i8 value3) {
-  Ptr buffer = context->runtime->wasm_print_buffer;
-  if (buffer == nullptr)
-    return;
-  i32 total_cnt = ((i32 *)buffer)[0]++;
-  i32 print_pos = total_cnt % kWasmPrintBufferSize;
-  ((i32 *)buffer)[print_pos * 2 + 1] = 2;  // 2 for char
-  ((i8 *)buffer)[print_pos * 8 + 8] = value0;
-  ((i8 *)buffer)[print_pos * 8 + 9] = value1;
-  ((i8 *)buffer)[print_pos * 8 + 10] = value2;
-  ((i8 *)buffer)[print_pos * 8 + 11] = value3;
-}
-
-void wasm_set_kernel_parameter_i32(RuntimeContext *context,
-                                   int index,
-                                   i32 value) {
-  *(i32 *)(&context->args[index]) = value;
-}
-
-void wasm_set_kernel_parameter_f32(RuntimeContext *context,
-                                   int index,
-                                   f32 value) {
-  *(f32 *)(&context->args[index]) = value;
-}
-}
-
-#endif
