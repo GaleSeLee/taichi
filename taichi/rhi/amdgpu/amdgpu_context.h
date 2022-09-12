@@ -56,7 +56,7 @@ class AMDGPUContext {
     driver_.context_set_current(context_);
   }
 
-  ~CUDAContext();
+  ~AMDGPUContext();
 
   class ContextGuard {
    private:
@@ -64,15 +64,15 @@ class AMDGPUContext {
     void *new_ctx_;
 
    public:
-    ContextGuard(CUDAContext *new_ctx) : old_ctx_(nullptr), new_ctx_(new_ctx) {
-      CUDADriver::get_instance().context_get_current(&old_ctx_);
+    ContextGuard(AMDGPUContext *new_ctx) : old_ctx_(nullptr), new_ctx_(new_ctx) {
+      AMDGPUDriver::get_instance().context_get_current(&old_ctx_);
       if (old_ctx_ != new_ctx)
         new_ctx->make_current();
     }
 
     ~ContextGuard() {
       if (old_ctx_ != new_ctx_) {
-        CUDADriver::get_instance().context_set_current(old_ctx_);
+        AMDGPUDriver::get_instance().context_set_current(old_ctx_);
       }
     }
   };
@@ -85,7 +85,7 @@ class AMDGPUContext {
     return std::unique_lock<std::mutex>(lock_);
   }
 
-  static CUDAContext &get_instance();
+  static AMDGPUContext &get_instance();
 };
 
 TLANG_NAMESPACE_END

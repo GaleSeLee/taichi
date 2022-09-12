@@ -6,8 +6,6 @@
 
 TLANG_NAMESPACE_BEGIN
 
-// Driver constants from cuda.h
-
 constexpr uint32 HIP_EVENT_DEFAULT = 0x0;
 constexpr uint32 HIP_STREAM_DEFAULT = 0x0;
 constexpr uint32 HIP_STREAM_NON_BLOCKING = 0x1;
@@ -56,7 +54,7 @@ class AMDGPUFunction {
   }
 
   std::string get_error_message(uint32 err) {
-    return get_cuda_error_message(err) +
+    return get_amdgpu_error_message(err) +
            fmt::format(" while calling {} ({})", name_, symbol_name_);
   }
 
@@ -66,7 +64,6 @@ class AMDGPUFunction {
     return err;
   }
 
-  // Note: CUDA driver API passes everything as value
   void operator()(Args... args) {
     auto err = call(args...);
     TI_ERROR_IF(err, get_error_message(err));
@@ -95,9 +92,6 @@ class AMDGPUDriverBase {
 
 class AMDGPUDriver : protected AMDGPUDriverBase {
  public:
- // Actually, functions are runtime api
- // This is not the same as CUDA
- // The name "amdgpu_driver_functions.inc.h" is to unify with CUDA
 #define PER_AMDGPU_FUNCTION(name, symbol_name, ...) \
   AMDGPUFunction<__VA_ARGS__> name;
 #include "taichi/rhi/amdgpu/amdgpu_driver_functions.inc.h" 
@@ -111,12 +105,12 @@ class AMDGPUDriver : protected AMDGPUDriverBase {
 
   bool detected();
 
-  static CUDADriver &get_instance();
+  static AMDGPUDriver &get_instance();
 
-  static CUDADriver &get_instance_without_context();
+  static AMDGPUDriver &get_instance_without_context();
 
  private:
-  CUDADriver();
+  AMDGPUDriver();
 
   std::mutex lock_;
 

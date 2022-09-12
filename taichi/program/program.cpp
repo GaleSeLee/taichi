@@ -12,6 +12,7 @@
 #include "taichi/runtime/program_impls/metal/metal_program.h"
 #include "taichi/codegen/cc/cc_program.h"
 #include "taichi/platform/cuda/detect_cuda.h"
+#include "taichi/platform/amdgpu/detect_amdgpu.h"
 #include "taichi/system/unified_allocator.h"
 #include "taichi/system/timeline.h"
 #include "taichi/ir/snode.h"
@@ -322,6 +323,8 @@ Arch Program::get_accessor_arch() {
     return Arch::vulkan;
   } else if (config.arch == Arch::cuda) {
     return Arch::cuda;
+  } else if (config.arch == Arch::amdgpu) {
+    return Arch::amdgpu;
   } else if (config.arch == Arch::metal) {
     return Arch::metal;
   } else if (config.arch == Arch::cc) {
@@ -486,7 +489,8 @@ Texture *Program::create_texture(const DataType type,
 
 intptr_t Program::get_ndarray_data_ptr_as_int(const Ndarray *ndarray) {
   uint64_t *data_ptr{nullptr};
-  if (arch_is_cpu(config.arch) || config.arch == Arch::cuda) {
+  if (arch_is_cpu(config.arch) || config.arch == Arch::cuda 
+      || config.arch == Arch::amdgpu) {
     // For the LLVM backends, device allocation is a physical pointer.
     data_ptr =
         program_impl_->get_ndarray_alloc_info_ptr(ndarray->ndarray_alloc_);

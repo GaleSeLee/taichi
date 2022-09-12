@@ -11,6 +11,7 @@
 #include "taichi/common/task.h"
 #include "taichi/math/math.h"
 #include "taichi/platform/cuda/detect_cuda.h"
+#include "taichi/platform/amdgpu/detect_amdgpu.h"
 #include "taichi/program/py_print_buffer.h"
 #include "taichi/python/exception.h"
 #include "taichi/python/export.h"

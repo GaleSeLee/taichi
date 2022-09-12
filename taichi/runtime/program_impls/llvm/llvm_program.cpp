@@ -71,12 +71,18 @@ std::unique_ptr<StructCompiler> LlvmProgramImpl::compile_snode_tree_types_impl(
         has_multiple_snode_trees, runtime_exec_->llvm_context_device_.get());
     struct_compiler = std::make_unique<StructCompilerLLVM>(
         Arch::dx12, this, std::move(device_module), tree->id());
-  } else {
+  } else if (config->arch == Arch::cuda) {
     TI_ASSERT(config->arch == Arch::cuda);
     auto device_module = clone_struct_compiler_initial_context(
         has_multiple_snode_trees, runtime_exec_->llvm_context_device_.get());
     struct_compiler = std::make_unique<StructCompilerLLVM>(
         Arch::cuda, this, std::move(device_module), tree->id());
+  } else if (config->arch == Arch::amdgpu) {
+    TI_ASSERT(config->arch == Arch::amdgpu);
+    auto device_module = clone_struct_compiler_initial_context(
+        has_multiple_snode_trees, runtime_exec_->llvm_context_device_.get());
+    struct_compiler = std::make_unique<StructCompilerLLVM>(
+        Arch::amdgpu, this, std::move(device_module), tree->id());
   }
   struct_compiler->run(*root);
   ++num_snode_trees_processed_;

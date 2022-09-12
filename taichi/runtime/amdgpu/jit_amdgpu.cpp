@@ -47,7 +47,7 @@ JITModule *JITSessionAMDGPU ::add_module(std::unique_ptr<llvm::Module> M,
   return modules.back().get();
 }
 
-std::string JITSessionCUDA::compile_module_to_gcn(
+std::string JITSessionAMDGPU::compile_module_to_gcn(
   // Note: compile_module_to_gcn generates bianry code object actually.
   std::unique_ptr<llvm::Module> &llvm_module) {
   // Part of this function is borrowed from Halide::CodeGen_PTX_Dev.cpp

@@ -32,7 +32,6 @@ AMDGPUContext::AMDGPUContext()
   // driver_.device_get_attribute(
   //     &cc_minor, CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MINOR, 0);
 
-  // TI_TRACE("CUDA Device Compute Capability: {}.{}", cc_major, cc_minor);
   driver_.context_create(&context_, 0, device_);
 
   const auto GB = std::pow(1024.0, 3.0);
@@ -51,7 +50,6 @@ AMDGPUContext::AMDGPUContext()
   // mcpu_ = fmt::format("sm_{}", compute_capability_);
   mcpu_ = "gfx1030";
 
-  // TI_TRACE("Emitting CUDA code for {}", mcpu_);
   TI_TRACE("Emitting AMDGPU code for {}", mcpu_);
 }
 

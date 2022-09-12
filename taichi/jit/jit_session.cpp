@@ -16,6 +16,11 @@ std::unique_ptr<JITSession> create_llvm_jit_session_cuda(
     TaichiLLVMContext *tlctx,
     CompileConfig *config,
     Arch arch);
+
+std::unique_ptr<JITSession> create_llvm_jit_session_amdgpu(
+    TaichiLLVMContext *tlctx,
+    CompileConfig *config,
+    Arch arch);
 #endif
 
 JITSession::JITSession(TaichiLLVMContext *tlctx, CompileConfig *config)

@@ -2,6 +2,8 @@
 #include "taichi/system/timer.h"
 #include "taichi/rhi/cuda/cuda_driver.h"
 #include "taichi/rhi/cuda/cuda_device.h"
+#include "taichi/rhi/amdgpu/amdgpu_driver.h"
+#include "taichi/rhi/amdgpu/amdgpu_device.h"
 
 namespace taichi {
 namespace lang {

@@ -7,12 +7,12 @@
 TLANG_NAMESPACE_BEGIN
 
 std::string get_amdgpu_error_message(uint32 err) {
-  auto err_name_ptr = CUDADriver::get_instance_without_context().get_error_name(err);
-  auto err_string_ptr = CUDADriver::get_instance_without_context().get_error_string(err);
+  auto err_name_ptr = AMDGPUDriver::get_instance_without_context().get_error_name(err);
+  auto err_string_ptr = AMDGPUDriver::get_instance_without_context().get_error_string(err);
   return fmt::format("AMDGPU Error {}: {}", err_name_ptr, err_string_ptr);
 }
 
-CUDADriverBase::AMDGPUDriverBase() {
+AMDGPUDriverBase::AMDGPUDriverBase() {
   disabled_by_env_ = (get_environ_config("TI_ENABLE_AMDGPU", 1) == 0);
   if (disabled_by_env_) {
     TI_TRACE("AMDGPU driver disabled by enviroment variable \"TI_ENABLE_AMDGPU\".");
@@ -23,7 +23,7 @@ bool AMDGPUDriverBase::load_lib(std::string lib_linux) {
 #if defined(TI_PLATFORM_LINUX)
   auto lib_name = lib_linux;
 #else
-  static_assert(false, "Taichi CUDA driver supports only Linux.");
+  static_assert(false, "Taichi AMDGPU driver supports only Linux.");
 #endif
 
   loader_ = std::make_unique<DynamicLoader>(lib_name);
@@ -50,7 +50,7 @@ AMDGPUDriver::AMDGPUDriver() {
 
   int version;
   driver_get_version(&version);
-  TI_TRACE("CUDA driver API (v{}.{}) loaded.", version / 1000,
+  TI_TRACE("AMDGPU driver API (v{}.{}) loaded.", version / 1000,
            version % 1000 / 10);
 
 #define PER_AMDGPU_FUNCTION(name, symbol_name, ...) \

@@ -46,7 +46,7 @@ FrontendForStmt::FrontendForStmt(const ExprGroup &loop_var,
       strictly_serialized(config.strictly_serialized),
       mem_access_opt(config.mem_access_opt),
       block_dim(config.block_dim) {
-  if (arch == Arch::cuda) {
+  if (arch == Arch::cuda || arch == Arch::amdgpu) {
     this->num_cpu_threads = 1;
     TI_ASSERT(this->block_dim <= taichi_max_gpu_block_dim);
   } else {
@@ -73,7 +73,7 @@ FrontendForStmt::FrontendForStmt(const ExprGroup &loop_var,
       mesh_for(true),
       mesh(mesh.ptr.get()),
       element_type(element_type) {
-  if (arch == Arch::cuda) {
+  if (arch == Arch::cuda || arch == Arch::amdgpu) {
     this->num_cpu_threads = 1;
     TI_ASSERT(this->block_dim <= taichi_max_gpu_block_dim);
   } else {
@@ -104,7 +104,7 @@ FrontendForStmt::FrontendForStmt(const Expr &loop_var,
       strictly_serialized(config.strictly_serialized),
       mem_access_opt(config.mem_access_opt),
       block_dim(config.block_dim) {
-  if (arch == Arch::cuda) {
+  if (arch == Arch::cuda || arch == Arch::amdgpu) {
     this->num_cpu_threads = 1;
   } else {
     if (this->num_cpu_threads == 0)
@@ -929,7 +929,7 @@ void ASTBuilder::insert_for(const Expr &s,
 
 Expr ASTBuilder::insert_thread_idx_expr() {
   auto loop = stack_.size() ? stack_.back()->parent_stmt : nullptr;
-  TI_ERROR_IF(arch_ != Arch::cuda && !arch_is_cpu(arch_),
+  TI_ERROR_IF(arch_ != Arch::cuda && !arch_is_cpu(arch_) && arch_ != Arch::amdgpu,
               "ti.thread_idx() is only available in cuda or cpu context.");
   if (loop != nullptr) {
     auto i = stack_.size() - 1;

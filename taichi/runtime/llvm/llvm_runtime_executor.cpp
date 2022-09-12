@@ -6,6 +6,9 @@
 #include "taichi/rhi/cuda/cuda_device.h"
 #include "taichi/platform/cuda/detect_cuda.h"
 #include "taichi/rhi/cuda/cuda_driver.h"
+#include "taichi/rhi/amdgpu/amdgpu_device.h"
+#include "taichi/platform/amdgpu/detect_amdgpu.h"
+#include "taichi/rhi/amdgpu/amdgpu_driver.h"
 
 #if defined(TI_WITH_CUDA)
 #include "taichi/rhi/cuda/cuda_context.h"

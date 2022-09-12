@@ -1,6 +1,7 @@
 #include "taichi/program/kernel.h"
 
 #include "taichi/rhi/cuda/cuda_driver.h"
+#include "taichi/rhi/amdgpu/amdgpu_driver.h"
 #include "taichi/codegen/codegen.h"
 #include "taichi/common/logging.h"
 #include "taichi/common/task.h"
@@ -422,7 +423,7 @@ void Kernel::init(Program &program,
 // static
 bool Kernel::supports_lowering(Arch arch) {
   return arch_is_cpu(arch) || (arch == Arch::cuda) || (arch == Arch::dx12) ||
-         (arch == Arch::metal);
+         (arch == Arch::metal) || (arch == Arch::amdgpu);
 }
 
 void Kernel::offload_to_executable(IRNode *stmt) {
