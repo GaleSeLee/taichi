@@ -8,8 +8,6 @@ target_sources(${AMDGPU_RHI}
     amdgpu_caching_allocator.cpp
     amdgpu_context.cpp
     amdgpu_driver.cpp
-    amdgpu_profiler.cpp
-    cupti_toolkit.cpp
   )
 
 target_include_directories(${AMDGPU_RHI}
