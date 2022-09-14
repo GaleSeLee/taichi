@@ -3,6 +3,9 @@
 template <typename T, typename G>
 class lock_guard {
  public:
+#ifdef ARCH_cuda
+  __host__ __device__
+#endif
   lock_guard(Ptr lock, const T &func, const G &test) {
 #if ARCH_x64 || ARCH_arm64
     mutex_lock_i32(lock);
@@ -24,13 +27,13 @@ class lock_guard {
         mutex_unlock_i32(lock);
       }
     };
-
+    
     if (cuda_compute_capability() < 70) {
       // Note that unfortunately critical sections on pre-Pascal (inclusive)
       // devices has undefined behavior (deadlock or not), if more than one
       // threads in a warp try to acquire the same lock.
       // Therefore we need a serialization within a warp
-      /*
+      
       bool done = false;
       while (!done) {
         if (atomic_exchange_i32((i32 *)lock, 1) == 1) {
@@ -39,7 +42,7 @@ class lock_guard {
           mutex_unlock_i32(lock);
         }
       }
-      */
+      
       auto fast = false;
       if (fast) {
         auto active_mask = cuda_active_mask();
@@ -67,12 +70,21 @@ class lock_guard {
   }
 };
 
+#ifdef ARCH_cuda
+#include <hip/hip_runtime.h>
+#endif
 template <typename T, typename G>
+#ifdef ARCH_cuda
+__host__ __device__
+#endif
 void locked_task(void *lock, const T &func, const G &test) {
   lock_guard<T, G> _((Ptr)lock, func, test);
 }
 
 template <typename T>
+#ifdef ARCH_cuda
+__host__ __device__
+#endif
 void locked_task(void *lock, const T &func) {
   locked_task(lock, func, []() { return true; });
 }
