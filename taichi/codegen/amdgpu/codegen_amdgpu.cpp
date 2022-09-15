@@ -46,7 +46,6 @@ public:
     }
 
     void emit_extra_unary(UnaryOpStmt *stmt) override {
-        auto input = llvm_val[stmt->operand];
         auto input_taichi_type = stmt->operand->ret_type;
         auto op = stmt->op_type;
 

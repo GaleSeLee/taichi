@@ -44,7 +44,8 @@ std::pair<std::ofstream, std::string> FileSequenceWriter::create_new_file() {
 }
 
 std::string FileSequenceWriter::get_filename() {
-  auto fn = fmt::format(filename_template_, counter_ - 1);
+  auto fn = fmt::format(filename_template_.substr(0, filename_template_.length()-2),
+                        counter_ - 1);
   return fn;
 }
 

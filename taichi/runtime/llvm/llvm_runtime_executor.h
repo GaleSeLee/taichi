@@ -135,6 +135,8 @@ class LlvmRuntimeExecutor {
    */
   void maybe_initialize_cuda_llvm_context();
 
+  void maybe_initialize_amdgpu_llvm_context();
+
   void finalize();
 
   uint64 fetch_result_uint64(int i, uint64 *result_buffer);

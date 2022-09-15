@@ -52,6 +52,21 @@ LlvmRuntimeExecutor::LlvmRuntimeExecutor(CompileConfig &config,
     if (config.arch != Arch::cuda) {
       TI_WARN("Falling back to {}.", arch_name(host_arch()));
     }
+  } else if (config.arch == Arch::amdgpu) {
+        if (!runtime_mem_info_) {
+      TI_WARN("Taichi is not compiled with AMDGPU.");
+      config.arch = host_arch();
+    } else if (!is_hip_api_available()) {
+      TI_WARN("No AMDGPU driver API detected.");
+      config.arch = host_arch();
+    } else if (!runtime_mem_info_->detected()) {
+      TI_WARN("No AMDGPU device detected.");
+      config.arch = host_arch();
+    } else {
+    }
+    if (config.arch != Arch::amdgpu) {
+      TI_WARN("Falling back to {}.", arch_name(host_arch()));
+    }
   }
   snode_tree_buffer_manager_ = std::make_unique<SNodeTreeBufferManager>(this);
   thread_pool_ = std::make_unique<ThreadPool>(config.cpu_max_num_threads);
@@ -138,6 +153,14 @@ LlvmRuntimeExecutor::LlvmRuntimeExecutor(CompileConfig &config,
   }
 #endif
 
+#if defined(TI_WITH_AMDGPU)
+  if (config.arch == Arch::amdgpu) {
+    AMDGPUContext::get_instance().set_debug(config.debug);
+    device_ = std::make_shared<amdgpu::AmdgpuDevice>();
+    this->maybe_initialize_amdgpu_llvm_context();
+  }
+#endif
+
 #ifdef TI_WITH_DX12
   if (config.arch == Arch::dx12) {
     // FIXME: add dx12 device.
@@ -171,6 +194,14 @@ void LlvmRuntimeExecutor::maybe_initialize_cuda_llvm_context() {
   if (config_->arch == Arch::cuda && llvm_context_device_ == nullptr) {
     llvm_context_device_ =
         std::make_unique<TaichiLLVMContext>(config_, Arch::cuda);
+    llvm_context_device_->init_runtime_jit_module();
+  }
+}
+
+void LlvmRuntimeExecutor::maybe_initialize_amdgpu_llvm_context() {
+  if (config_->arch == Arch::amdgpu && llvm_context_device_ == nullptr) {
+    llvm_context_device_ =
+        std::make_unique<TaichiLLVMContext>(config_, Arch::amdgpu);
     llvm_context_device_->init_runtime_jit_module();
   }
 }

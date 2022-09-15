@@ -119,6 +119,8 @@ cuda = _ti_core.cuda
 """
 # ----------------------
 
+amdgpu = _ti_core.amdgpu
+
 metal = _ti_core.metal
 """The Apple Metal backend.
 """
@@ -149,7 +151,7 @@ dx11 = _ti_core.dx11
 """
 # ----------------------
 
-gpu = [cuda, metal, vulkan, opengl, dx11]
+gpu = [cuda, metal, vulkan, opengl, dx11, amdgpu]
 """A list of GPU backends supported on the current system.
 Currently contains 'cuda', 'metal', 'opengl', 'vulkan', 'dx11'.
 
@@ -719,6 +721,7 @@ def is_arch_supported(arch, use_gles=False):
 
     arch_table = {
         cuda: _ti_core.with_cuda,
+        amdgpu: _ti_core.with_amdgpu,
         metal: _ti_core.with_metal,
         opengl: functools.partial(_ti_core.with_opengl, use_gles),
         cc: _ti_core.with_cc,
@@ -764,7 +767,7 @@ def get_compute_stream_device_time_elapsed_us() -> float:
 __all__ = [
     'i', 'ij', 'ijk', 'ijkl', 'ijl', 'ik', 'ikl', 'il', 'j', 'jk', 'jkl', 'jl',
     'k', 'kl', 'l', 'x86_64', 'x64', 'dx11', 'wasm', 'arm64', 'cc', 'cpu',
-    'cuda', 'gpu', 'metal', 'opengl', 'vulkan', 'extension', 'loop_config',
+    'cuda', 'amdgpu', 'gpu', 'metal', 'opengl', 'vulkan', 'extension', 'loop_config',
     'global_thread_idx', 'assume_in_range', 'block_local', 'cache_read_only',
     'init', 'mesh_local', 'no_activate', 'reset', 'mesh_patch_idx',
     'get_compute_stream_device_time_elapsed_us'
