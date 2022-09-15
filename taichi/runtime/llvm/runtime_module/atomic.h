@@ -38,7 +38,6 @@ DEFINE_ATOMIC_EXCHANGE(u64)
   }
 #else
 #define DEFINE_ATOMIC_OP_INTRINSIC(OP, T)                                \
-  __host__ __device__                                                    \
   T atomic_##OP##_##T(volatile T *dest, T val) {                         \
     return __atomic_fetch_##OP(dest, val,                                \
                                std::memory_order::memory_order_seq_cst); \

@@ -101,16 +101,16 @@ LlvmRuntimeExecutor::LlvmRuntimeExecutor(CompileConfig &config,
     // alter block to workgroup
     int num_CUs{1};
     AMDGPUDriver::get_instance().device_get_attribute(
-      &num_CUs, HIP_DEVICE_ATTRIBUTE_MULTIPROCESSOR_COUNT, nullptr);
+      &num_CUs, HIP_DEVICE_ATTRIBUTE_MULTIPROCESSOR_COUNT, 0);
     int query_max_block_dim{1024};
     AMDGPUDriver::get_instance().device_get_attribute(
-      &query_max_block_dim, HIP_DEVICE_ATTRIBUTE_MAX_BLOCK_DIM_X, nullptr);
+      &query_max_block_dim, HIP_DEVICE_ATTRIBUTE_MAX_BLOCK_DIM_X, 0);
     int query_max_block_per_cu{32};
     if (config.max_block_dim == 0) {
       config.max_block_dim = query_max_block_dim;
     }
     if (config.saturating_grid_dim == 0) {
-      config.staturating_grid_dim = num_CUs * query_max_block_per_cu * 2;
+      config.saturating_grid_dim = num_CUs * query_max_block_per_cu * 2;
     }
 #endif
   }
@@ -438,7 +438,7 @@ void LlvmRuntimeExecutor::initialize_llvm_runtime_snodes(
 #else
     TI_NOT_IMPLEMENTED
 #endif
-  } else if (config_->arch == Arch::AMDGPU) {
+  } else if (config_->arch == Arch::amdgpu) {
 #if defined(TI_WITH_AMDGPU)
     alloc = amdgpu_device()->import_memory(root_buffer, rounded_size);
 #else
@@ -496,6 +496,13 @@ cuda::CudaDevice *LlvmRuntimeExecutor::cuda_device() {
   return static_cast<cuda::CudaDevice *>(device_.get());
 }
 
+amdgpu::AmdgpuDevice *LlvmRuntimeExecutor::amdgpu_device() {
+  if (config_->arch != Arch::amdgpu) {
+    TI_ERROR("arch is not amdgpu");
+  }
+  return static_cast<amdgpu::AmdgpuDevice *>(device_.get());
+}
+
 cpu::CpuDevice *LlvmRuntimeExecutor::cpu_device() {
   TI_ERROR_IF(!arch_is_cpu(config_->arch), "arch is not cpu");
   return static_cast<cpu::CpuDevice *>(device_.get());
@@ -537,7 +544,7 @@ void LlvmRuntimeExecutor::fill_ndarray(const DeviceAllocation &alloc,
 #endif
   } else if (config_->arch == Arch::amdgpu) {
 #if defined(TI_WITH_AMDGPU)
-    AMDGPUDriver::get_instance().memcpy((void *)ptr, data, size);
+    AMDGPUDriver::get_instance().memset((void *)ptr, data, size);
 #else
     TI_NOT_IMPLEMENTED;
 #endif
@@ -574,8 +581,7 @@ void LlvmRuntimeExecutor::finalize() {
   }
 #elif defined(TI_WITH_AMDGPU)
   if (preallocated_device_buffer_ != nullptr) {
-    amdgpu_device()->dealloca_memory(preallocated_device_buffer_alloc_);
-  }
+    amdgpu_device()->dealloc_memory(preallocated_device_buffer_alloc_);
   }
 #endif
 }
@@ -637,7 +643,7 @@ void LlvmRuntimeExecutor::materialize_runtime(MemoryPool *memory_pool,
     preallocated_device_buffer_alloc_params.size = prealloc_size;
     preallocated_device_buffer_alloc_ =
         amdgpu_device()->allocate_memory(preallocated_device_buffer_alloc_params);
-    amdgpu::AMDGPUDevice::AllocInfo preallocated_device_buffer_alloc_info =
+    amdgpu::AmdgpuDevice::AllocInfo preallocated_device_buffer_alloc_info =
         amdgpu_device()->get_alloc_info(preallocated_device_buffer_alloc_);
     preallocated_device_buffer_ = preallocated_device_buffer_alloc_info.ptr;
 

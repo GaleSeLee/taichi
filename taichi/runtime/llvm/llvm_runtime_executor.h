@@ -28,7 +28,7 @@ class CudaDevice;
 }  // namespace cuda
 
 namespace amdgpu {
-class AMDGPUDevice;
+class AmdgpuDevice;
 }  // namespace amdgpu
 
 namespace cpu {
@@ -124,6 +124,7 @@ class LlvmRuntimeExecutor {
   /* -------------------------- */
   cuda::CudaDevice *cuda_device();
   cpu::CpuDevice *cpu_device();
+  amdgpu::AmdgpuDevice *amdgpu_device();
 
   void initialize_host();
 

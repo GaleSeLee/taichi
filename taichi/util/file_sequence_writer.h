@@ -26,6 +26,8 @@ class FileSequenceWriter {
 
   std::string write(const std::string &str);
 
+  std::string get_filename();
+
  private:
   int counter_;
   std::string filename_template_;

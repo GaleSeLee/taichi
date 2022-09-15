@@ -52,7 +52,7 @@ public:
 
 // TODO (Gale)
 // add int type support
-#define UNARY_STD(x)                                                          \
+#define UNARY_STD(x)                                                      \
 else if (op == UnaryOpType::x) {                                          \
     if (input_taichi_type->is_primitive(PrimitiveTypeID::f16)) {          \
         llvm_val[stmt] = create_call("__ocml_" #x "_f16");                \
@@ -74,7 +74,6 @@ else if (op == UnaryOpType::x) {                                          \
             } else {                                                              
                 TI_NOT_IMPLEMENTED
             }
-            
         }
         UNARY_STD(cos);
         UNARY_STD(acos);
@@ -86,8 +85,8 @@ else if (op == UnaryOpType::x) {                                          \
         UNARY_STD(log);
         UNARY_STD(sqrt);
         else {
-            TI_P(unary_op_type_name(op));
             TI_NOT_IMPLEMENTED
+            TI_P(unary_op_type_name(op));
         }
 #undef UNARY_STD
     }
@@ -300,8 +299,9 @@ else if (op == UnaryOpType::x) {                                          \
         }
         auto lhs = llvm_val[stmt->lhs];
         auto rhs = llvm_val[stmt->rhs];
-#define BINARY_STD(x)
-    if (op == UnaryOpType::x) {                                                 \
+
+#define BINARY_STD(x)                                                           \
+    if (op == BinaryOpType::x) {                                                \
         if (input_taichi_type->is_primitive(PrimitiveTypeID::f16)) {            \
             llvm_val[stmt] = create_call("__ocml_" #x "_16f", lhs, rhs);        \
         } else if (input_taichi_type->is_primitive(PrimitiveTypeID::f32)) {     \
@@ -419,6 +419,8 @@ FunctionType AMDGPUModuleToFunctionConverter::convert(
                                                 (void *)&context_pointer, sizeof(RuntimeContext *));
                 }
             }
+            // TODO (Gale)
+            // free context_pointe
 
             if (transferred) {
                 AMDGPUDriver::get_instance().steam_synchronize(nullptr);

@@ -16,7 +16,7 @@ DeviceAllocation AmdgpuDevice::allocate_memory(const AllocParams &params) {
 
   if (params.host_read || params.host_write) {
     AMDGPUDriver::get_instance().malloc_managed(&info.ptr, params.size,
-                                              CU_MEM_ATTACH_GLOBAL);
+                                                HIP_MEM_ATTACH_GLOBAL);
   } else {
     AMDGPUDriver::get_instance().malloc(&info.ptr, params.size);
   }

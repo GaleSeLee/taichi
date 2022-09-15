@@ -43,4 +43,9 @@ std::pair<std::ofstream, std::string> FileSequenceWriter::create_new_file() {
   return {std::ofstream(fn), fn};
 }
 
+std::string FileSequenceWriter::get_filename() {
+  auto fn = fmt::format(filename_template_, counter_ - 1);
+  return fn;
+}
+
 }  // namespace taichi

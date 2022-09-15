@@ -40,7 +40,7 @@ JITModule *JITSessionAMDGPU ::add_module(std::unique_ptr<llvm::Module> M,
   if (std::system(lld_cmd.c_str())) 
       TI_ERROR(fmt::format("Generate {} Error", hsaco_filename));
 
-  std::string hsaoc_str = load_file(hsaco_filename);
+  std::string hsaco_str = load_file(hsaco_filename);
   AMDGPUDriver::get_instance().module_load_data(&amdgpu_module, hsaco_str.c_str());
   TI_TRACE("AMDGPU module load time : {}ms", (Time::get_time() - t) * 1000);
   modules.push_back(std::make_unique<JITModuleAMDGPU>(amdgpu_module));

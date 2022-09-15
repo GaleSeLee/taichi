@@ -13,7 +13,7 @@
 TLANG_NAMESPACE_BEGIN
 
 AMDGPUContext::AMDGPUContext()
-    : profiler_(nullptr), driver_(AMDGPUDriver::get_instance_without_context()) {
+    : driver_(AMDGPUDriver::get_instance_without_context()) {
   dev_count_ = 0;
   driver_.init(0);
   driver_.device_get_count(&dev_count_);
@@ -80,7 +80,6 @@ void AMDGPUContext::launch(void *func,
                          unsigned block_dim,
                          std::size_t dynamic_shared_mem_bytes,
                          int arg_bytes) {
-  KernelProfilerBase::TaskHandle task_handle;
   if (grid_dim > 0) {
     std::lock_guard<std::mutex> _(lock_);
     void *config[] = {(void *)0x01, const_cast<void*>(arg_pointers), 

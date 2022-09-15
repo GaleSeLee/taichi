@@ -61,6 +61,12 @@ class JITModule {
     TI_NOT_IMPLEMENTED
   }
 
+  virtual void call(const std::string &name,
+                    void *arg_pointers,
+                    int arg_bytes) {
+    TI_NOT_IMPLEMENTED
+  }
+
   // Note: **launch** is for parallel (GPU)_kernels
   // Note: args must pass by value
   template <typename... Args>
@@ -81,6 +87,16 @@ class JITModule {
                       const std::vector<void *> &arg_pointers) {
     TI_NOT_IMPLEMENTED
   }
+
+  virtual void launch(const std::string &name,
+                      std::size_t grid_dim,
+                      std::size_t block_dim,
+                      std::size_t shared_mem_bytes,
+                      void *arg_pointers,
+                      int arg_bytes) {
+    TI_NOT_IMPLEMENTED
+  }
+
 
   // directly call the function (e.g. on CPU), or via another runtime system
   // (e.g. cudaLaunch)?
