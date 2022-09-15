@@ -416,15 +416,12 @@ FunctionType AMDGPUModuleToFunctionConverter::convert(
                     TI_TRACE("Launching kernel {}<<<{}, {}>>>", task.name, task.grid_dim,
                                 task.block_dim);
                     amdgpu_modules[i]->launch(task.name, task.grid_dim, task.block_dim, 0,
-                                                (void *)&context_pointer, sizeof(RuntimeContext *));
+                                                (void *)&context_pointer, (int)sizeof(RuntimeContext *));
                 }
             }
             // TODO (Gale)
-            // memory free
-
-
+            AMDGPUDriver::get_instance().stream_synchronize(nullptr);
             if (transferred) {
-                AMDGPUDriver::get_instance().stream_synchronize(nullptr);
                 for (int i = 0; i < args.size(); i++) {
                     if (device_buffers[i] != arg_buffers[i]) {
                         AMDGPUDriver::get_instance().memcpy_device_to_host(
@@ -434,6 +431,8 @@ FunctionType AMDGPUModuleToFunctionConverter::convert(
                     }
                 }
             }
+            AMDGPUDriver::get_instance().mem_free((void *)context_pointer);
+            
         };
 }
 

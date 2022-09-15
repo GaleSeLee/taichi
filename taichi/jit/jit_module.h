@@ -33,6 +33,26 @@ class JITModule {
     return ret;
   }
 
+  static int get_args_bytes() {
+    return 0;
+  }
+
+  template <typename... Args, typename T>
+  static int get_args_bytes(T t, Args ...args) {
+    return get_args_bytes(args...) + sizeof(T); 
+  }
+
+  static void init_args_pointers(char *packed_args) {
+    return ;
+  }
+
+  template <typename... Args, typename T>
+  static void init_args_pointers(char *packed_args, T t, Args ...args) {
+      std::memcpy(packed_args, &t, sizeof(t));
+      init_args_pointers(packed_args + sizeof(t), args...);
+      return ;
+  }
+
   static std::vector<void *> get_arg_pointers() {
     return std::vector<void *>();
   }
@@ -43,6 +63,21 @@ class JITModule {
     ret.insert(ret.begin(), &t);
     return ret;
   }
+
+#if defined(TI_WITH_AMDGPU)
+  template <typename... Args>
+  void call(const std::string &name, Args... args) {
+    if (direct_dispatch()) {
+      get_function<Args...>(name)(args...);
+    } else {
+      auto arg_bytes = JITModule::get_args_bytes(args...);
+      char *packed_args = (char*)std::malloc(arg_bytes);
+      JITModule::init_args_pointers(packed_args, args...);
+      call(name, (void*)packed_args, (int)arg_bytes);
+      std::free(packed_args);
+    }
+  }
+#else
 
   // Note: **call** is for serial functions
   // Note: args must pass by value
@@ -55,6 +90,7 @@ class JITModule {
       call(name, arg_pointers);
     }
   }
+#endif
 
   virtual void call(const std::string &name,
                     const std::vector<void *> &arg_pointers) {
