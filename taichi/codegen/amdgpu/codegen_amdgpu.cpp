@@ -75,15 +75,15 @@ else if (op == UnaryOpType::x) {                                          \
                 TI_NOT_IMPLEMENTED
             }
         }
-        UNARY_STD(cos);
-        UNARY_STD(acos);
-        UNARY_STD(sin);
-        UNARY_STD(asin);
-        UNARY_STD(tan);
-        UNARY_STD(tanh);
-        UNARY_STD(exp);
-        UNARY_STD(log);
-        UNARY_STD(sqrt);
+        UNARY_STD(cos)
+        UNARY_STD(acos)
+        UNARY_STD(sin)
+        UNARY_STD(asin)
+        UNARY_STD(tan)
+        UNARY_STD(tanh)
+        UNARY_STD(exp)
+        UNARY_STD(log)
+        UNARY_STD(sqrt)
         else {
             TI_NOT_IMPLEMENTED
             TI_P(unary_op_type_name(op));
@@ -264,7 +264,7 @@ else if (op == UnaryOpType::x) {                                          \
                 //     HIP_DEVICE_ATTRIBUTE_MAX_BLOCKS_PER_MULTIPROCESSOR, nullptr);
                 int num_SMs;
                 AMDGPUDriver::get_instance().device_get_attribute(
-                    &num_SMs, CU_DEVICE_ATTRIBUTE_MULTIPROCESSOR_COUNT, nullptr);
+                    &num_SMs, HIP_DEVICE_ATTRIBUTE_MULTIPROCESSOR_COUNT, 0);
                 current_task->grid_dim = num_SMs * query_max_block_per_sm;
             }
             current_task->block_dim = stmt->block_dim;
@@ -294,7 +294,8 @@ else if (op == UnaryOpType::x) {                                          \
     
     void visit(BinaryOpStmt *stmt) override {
         auto op = stmt->op_type;
-        if (op != BinaryopType::atan2 && op != BinaryOpType::pow) {
+        auto ret_taichi_type = stmt->ret_type;
+        if (op != BinaryOpType::atan2 && op != BinaryOpType::pow) {
             return TaskCodeGenLLVM::visit(stmt);
         }
         auto lhs = llvm_val[stmt->lhs];
@@ -302,12 +303,12 @@ else if (op == UnaryOpType::x) {                                          \
 
 #define BINARY_STD(x)                                                           \
     if (op == BinaryOpType::x) {                                                \
-        if (input_taichi_type->is_primitive(PrimitiveTypeID::f16)) {            \
-            llvm_val[stmt] = create_call("__ocml_" #x "_16f", lhs, rhs);        \
-        } else if (input_taichi_type->is_primitive(PrimitiveTypeID::f32)) {     \
-            llvm_val[stmt] = create_call("__ocml_" #x "_32f", lhs, rhs);        \
-        } else if (input_taichi_type->is_primitive(PrimitiveTypeID::i64)) {     \
-            llvm_val[stmt] = create_call("__ocml_" #x "_64f", lhs, rhs);        \
+        if (ret_taichi_type->is_primitive(PrimitiveTypeID::f16)) {            \
+            llvm_val[stmt] = create_call("__ocml_" #x "_16f", {lhs, rhs});        \
+        } else if (ret_taichi_type->is_primitive(PrimitiveTypeID::f32)) {     \
+            llvm_val[stmt] = create_call("__ocml_" #x "_32f", {lhs, rhs});        \
+        } else if (ret_taichi_type->is_primitive(PrimitiveTypeID::i64)) {     \
+            llvm_val[stmt] = create_call("__ocml_" #x "_64f", {lhs, rhs});        \
         } else {                                                                \
             TI_NOT_IMPLEMENTED                                                  \
         }                                                                       \
@@ -362,7 +363,7 @@ FunctionType AMDGPUModuleToFunctionConverter::convert(
         }
         auto jit = tlctx_->jit.get();
         amdgpu_modules.push_back(
-            jit->add_modules(std::move(mod), executor_->get_config()->gpu_max_reg));
+            jit->add_module(std::move(mod), executor_->get_config()->gpu_max_reg));
         offloaded_tasks.push_back(std::move(tasks));
     }
     return [amdgpu_modules, kernel_name, args, offloaded_tasks,
@@ -375,7 +376,7 @@ FunctionType AMDGPUModuleToFunctionConverter::convert(
                 if (args[i].is_array) {
                     const auto arr_sz = context.array_runtime_sizes[i];
                     if (arr_sz == 0) continue;
-                    arg_buffers[i] = context.get_args<void *>(i);
+                    arg_buffers[i] = context.get_arg<void *>(i);
                     if (context.device_allocation_type[i] == 
                         RuntimeContext::DevAllocType::kNone) {
                             unsigned int attr_val = 0;
@@ -385,7 +386,7 @@ FunctionType AMDGPUModuleToFunctionConverter::convert(
 
                             if (ret_code != HIP_SUCCESS || attr_val != HIP_MEMORYTYPE_DEVICE) {
                                 transferred = true;
-                                AMDGPUDriver::get_instacne().malloc(&device_buffers[i], arr_sz);
+                                AMDGPUDriver::get_instance().malloc(&device_buffers[i], arr_sz);
                                 AMDGPUDriver::get_instance().memcpy_host_to_device(
                                     (void *)device_buffers[i], arg_buffers[i], arr_sz);
                             } else {
@@ -420,10 +421,11 @@ FunctionType AMDGPUModuleToFunctionConverter::convert(
                 }
             }
             // TODO (Gale)
-            // free context_pointe
+            // memory free
+
 
             if (transferred) {
-                AMDGPUDriver::get_instance().steam_synchronize(nullptr);
+                AMDGPUDriver::get_instance().stream_synchronize(nullptr);
                 for (int i = 0; i < args.size(); i++) {
                     if (device_buffers[i] != arg_buffers[i]) {
                         AMDGPUDriver::get_instance().memcpy_device_to_host(

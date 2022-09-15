@@ -32,6 +32,9 @@ constexpr int taichi_listgen_max_element_size = 1024;
 constexpr std::size_t default_shared_mem_size = 65536;
 
 template <typename T, typename G>
+#ifdef ARCH_cuda
+__host__ __device__
+#endif
 T taichi_union_cast_with_different_sizes(G g) {
   union {
     T t;
@@ -42,6 +45,9 @@ T taichi_union_cast_with_different_sizes(G g) {
 }
 
 template <typename T, typename G>
+#ifdef ARCH_cuda
+__host__ __device__
+#endif
 T taichi_union_cast(G g) {
   static_assert(sizeof(T) == sizeof(G));
   return taichi_union_cast_with_different_sizes<T>(g);

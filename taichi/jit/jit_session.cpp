@@ -40,7 +40,7 @@ std::unique_ptr<JITSession> JITSession::create(TaichiLLVMContext *tlctx,
     TI_NOT_IMPLEMENTED
 #endif
   } else if (arch == Arch::amdgpu) {
-#if define(TI_WITH_AMDGPU)
+#if defined(TI_WITH_AMDGPU)
     return create_llvm_jit_session_amdgpu(tlctx, config, arch);
 #else
     TI_NOT_IMPLEMENTED

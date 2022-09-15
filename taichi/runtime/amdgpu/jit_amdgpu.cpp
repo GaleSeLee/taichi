@@ -30,7 +30,7 @@ JITModule *JITSessionAMDGPU ::add_module(std::unique_ptr<llvm::Module> M,
   AMDGPUContext::get_instance().make_current();
   // Create module for object
   void *amdgpu_module;
-  TI_TRACE("PTX size: {:.2f}KB", ptx.size() / 1024.0);
+  TI_TRACE("GCN size: {:.2f}KB", gcn.size() / 1024.0);
   auto t = Time::get_time();
   TI_TRACE("Loading module...");
   [[maybe_unused]] auto _ = AMDGPUContext::get_instance().get_lock_guard();
@@ -40,7 +40,7 @@ JITModule *JITSessionAMDGPU ::add_module(std::unique_ptr<llvm::Module> M,
   if (std::system(lld_cmd.c_str())) 
       TI_ERROR(fmt::format("Generate {} Error", hsaco_filename));
 
-  std::string hsaco_str = load_file(hsaco_filename);
+  std::string hsaco_str = load_hsaco(hsaco_filename);
   AMDGPUDriver::get_instance().module_load_data(&amdgpu_module, hsaco_str.c_str());
   TI_TRACE("AMDGPU module load time : {}ms", (Time::get_time() - t) * 1000);
   modules.push_back(std::make_unique<JITModuleAMDGPU>(amdgpu_module));
@@ -109,7 +109,7 @@ std::unique_ptr<JITSession> create_llvm_jit_session_amdgpu(
   TI_ASSERT(arch == Arch::amdgpu);
   auto data_layout = llvm::DataLayout(
       "e-p:64:64-p1:64:64-p2:32:32-p3:32:32-p4:64:64-p5:32:32-p6:32:32-i64:64-v16:16-v24:32-"
-      "v32:32-v48:64-v96:128-v192:256-v256:256-v512:512-v1024:1024-v2048:2048-n32:64-S32-A5-G1-ni:7")
+      "v32:32-v48:64-v96:128-v192:256-v256:256-v512:512-v1024:1024-v2048:2048-n32:64-S32-A5-G1-ni:7");
   return std::make_unique<JITSessionAMDGPU>(tlctx, config, data_layout);
 }
 #else

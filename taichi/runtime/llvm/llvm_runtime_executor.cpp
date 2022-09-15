@@ -676,7 +676,7 @@ void LlvmRuntimeExecutor::materialize_runtime(MemoryPool *memory_pool,
 #else
     TI_NOT_IMPLEMENTED
 #endif
-  } else if (config_->arch = Arch::amdgpu) {
+  } else if (config_->arch == Arch::amdgpu) {
 #if defined(TI_WITH_AMDGPU)
     num_rand_states = config_->saturating_grid_dim * config_->max_block_dim;
 #else
