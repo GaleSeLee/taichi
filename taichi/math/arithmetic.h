@@ -10,7 +10,7 @@ namespace taichi {
 template <typename T,
           typename U,
           typename = std::enable_if_t<std::is_convertible_v<U, T>>>
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
 T iroundup(T a, U b) {
@@ -20,7 +20,7 @@ T iroundup(T a, U b) {
 }
 
 template <typename T>
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
 uint32_t log2int(T value) {

@@ -3,7 +3,7 @@
 template <typename T, typename G>
 class lock_guard {
  public:
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
   __host__ __device__
 #endif
   lock_guard(Ptr lock, const T &func, const G &test) {
@@ -70,11 +70,11 @@ class lock_guard {
   }
 };
 
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 #include <hip/hip_runtime.h>
 #endif
 template <typename T, typename G>
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
 void locked_task(void *lock, const T &func, const G &test) {
@@ -82,7 +82,7 @@ void locked_task(void *lock, const T &func, const G &test) {
 }
 
 template <typename T>
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
 void locked_task(void *lock, const T &func) {

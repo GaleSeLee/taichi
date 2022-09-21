@@ -227,6 +227,7 @@ else if (op == UnaryOpType::x) {                                          \
         current_offload = stmt;
         using Type = OffloadedStmt::TaskType;
         if (stmt->task_type == Type::gc) {
+            std::cout << "[GALE] GC" << std::endl;
             emit_amdgpu_gc(stmt);
         } else {
             init_offloaded_task_function(stmt);
@@ -420,8 +421,8 @@ FunctionType AMDGPUModuleToFunctionConverter::convert(
                 }
             }
             // TODO (Gale)
-            AMDGPUDriver::get_instance().stream_synchronize(nullptr);
             if (transferred) {
+                AMDGPUDriver::get_instance().stream_synchronize(nullptr);
                 for (int i = 0; i < args.size(); i++) {
                     if (device_buffers[i] != arg_buffers[i]) {
                         AMDGPUDriver::get_instance().memcpy_device_to_host(
@@ -431,7 +432,8 @@ FunctionType AMDGPUModuleToFunctionConverter::convert(
                     }
                 }
             }
-            AMDGPUDriver::get_instance().mem_free((void *)context_pointer);
+            TI_TRACE("Launching kernel");
+            //AMDGPUDriver::get_instance().mem_free((void *)context_pointer);
             
         };
 }

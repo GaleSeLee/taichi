@@ -6,7 +6,7 @@
 #include <algorithm>
 #include <type_traits>
 #include <cstring>
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 #include <hip/hip_runtime.h>
 #endif
 
@@ -21,7 +21,7 @@ using host_printf_type = void (*)(const char *, ...);
 // FunctionType.
 // Add dummy function to save function type for host_printf_type.
 extern "C" 
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
 void get_func_type_host_printf(const char *, ...) {
@@ -100,7 +100,7 @@ using Ptr = uint8 *;
 
 using RuntimeContextArgType = long long;
 
-#if ARCH_cuda
+#if ARCH_amdgpu
 extern "C" {
 
 void __assertfail(const char *message,
@@ -112,13 +112,13 @@ void __assertfail(const char *message,
 #endif
 
 template <typename T>
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
 void locked_task(void *lock, const T &func);
 
 template <typename T, typename G>
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
 void locked_task(void *lock, const T &func, const G &test);
@@ -156,7 +156,7 @@ extern "C" {
 // This is not really a runtime function. Include this in a function body to
 // mark it as force no inline. Helpful when preventing inlining huge function
 // bodies.
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
 void mark_force_no_inline() {
@@ -166,19 +166,19 @@ i64 cuda_clock_i64() {
   return 0;
 }
 
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
 void system_memfence() {
 }
 
-#if ARCH_cuda
+#if ARCH_amdgpu
 void cuda_vprintf(Ptr format, Ptr arg);
 #endif
 
 // Note that strlen is undefined on the CUDA backend, so we manually
 // implement it here.
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
 std::size_t taichi_strlen(const char *str) {
@@ -222,7 +222,7 @@ DEFINE_UNARY_REAL_FUNC(sin)
 DEFINE_FAST_POW(i32)
 DEFINE_FAST_POW(i64)
 
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
 int abs_i32(int a) {
@@ -241,98 +241,98 @@ i64 floordiv_i64(i64 a, i64 b) {
   return ifloordiv(a, b);
 }
 
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
 u16 min_u16(u16 a, u16 b) {
   return a < b ? a : b;
 }
 
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  i16 min_i16(i16 a, i16 b) {
   return a < b ? a : b;
 }
 
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
 u32 min_u32(u32 a, u32 b) {
   return a < b ? a : b;
 }
 
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  int min_i32(i32 a, i32 b) {
   return a < b ? a : b;
 }
 
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  u64 min_u64(u64 a, u64 b) {
   return a < b ? a : b;
 }
 
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  i64 min_i64(i64 a, i64 b) {
   return a < b ? a : b;
 }
 
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  u16 max_u16(u16 a, u16 b) {
   return a > b ? a : b;
 }
 
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  i16 max_i16(i16 a, i16 b) {
   return a > b ? a : b;
 }
 
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  u32 max_u32(u32 a, u32 b) {
   return a > b ? a : b;
 }
 
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  int max_i32(i32 a, i32 b) {
   return a > b ? a : b;
 }
 
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  u64 max_u64(u64 a, u64 b) {
   return a > b ? a : b;
 }
 
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  i64 max_i64(i64 a, i64 b) {
   return a > b ? a : b;
 }
 
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  int32 logic_not_i32(int32 a) {
   return !a;
 }
 
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  float32 sgn_f32(float32 a) {
@@ -346,7 +346,7 @@ __host__ __device__
   return b;
 }
 
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  float64 sgn_f64(float64 a) {
@@ -360,28 +360,28 @@ __host__ __device__
   return b;
 }
 
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  f32 atan2_f32(f32 a, f32 b) {
   return std::atan2(a, b);
 }
 
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  f64 atan2_f64(f64 a, f64 b) {
   return std::atan2(a, b);
 }
 
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  f32 pow_f32(f32 a, f32 b) {
   return std::pow(a, b);
 }
 
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  f64 pow_f64(f64 a, f64 b) {
@@ -447,11 +447,11 @@ struct LLVMRuntime;
 
 constexpr bool enable_assert = true;
 
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  void taichi_assert(RuntimeContext *context, i32 test, const char *msg);
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  void taichi_assert_runtime(LLVMRuntime *runtime, i32 test, const char *msg);
@@ -459,14 +459,14 @@ __host__ __device__
 #define TI_ASSERT(x) TI_ASSERT_INFO(x, #x)
 
 void ___stubs___() {
-#if ARCH_cuda
+#if ARCH_amdgpu
   cuda_vprintf(nullptr, nullptr);
   cuda_clock_i64();
 #endif
 }
 }
 
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  bool is_power_of_two(uint32 x) {
@@ -490,7 +490,7 @@ struct ListManager {
   i32 num_elements;
   LLVMRuntime *runtime;
 
-  #ifdef ARCH_cuda
+  #ifdef ARCH_amdgpu
 __host__ __device__
 #endif
 
@@ -507,12 +507,12 @@ __host__ __device__
     log2chunk_num_elements = taichi::log2int(num_elements_per_chunk);
   }
 
-  #ifdef ARCH_cuda
+  #ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  void append(void *data_ptr);
 
-  #ifdef ARCH_cuda
+  #ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  i32 reserve_new_element() {
@@ -523,24 +523,24 @@ __host__ __device__
   }
 
   template <typename T>
-  #ifdef ARCH_cuda
+  #ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  void push_back(const T &t) {
     this->append((void *)&t);
   }
 
-  #ifdef ARCH_cuda
+  #ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  Ptr allocate();
 
-  #ifdef ARCH_cuda
+  #ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  void touch_chunk(int chunk_id);
 
-  #ifdef ARCH_cuda
+  #ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  i32 get_num_active_chunks() {
@@ -551,21 +551,21 @@ __host__ __device__
     return counter;
   }
 
-  #ifdef ARCH_cuda
+  #ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  void clear() {
     num_elements = 0;
   }
 
-  #ifdef ARCH_cuda
+  #ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  void resize(i32 n) {
     num_elements = n;
   }
 
-  #ifdef ARCH_cuda
+  #ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  Ptr get_element_ptr(i32 i) {
@@ -574,7 +574,7 @@ __host__ __device__
   }
 
   template <typename T>
-  #ifdef ARCH_cuda
+  #ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  T &get(i32 i) {
@@ -586,14 +586,14 @@ __host__ __device__
     return get_element_ptr(i);
   }
 
-  #ifdef ARCH_cuda
+  #ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  i32 size() {
     return num_elements;
   }
 
-  #ifdef ARCH_cuda
+  #ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  i32 ptr2index(Ptr ptr) {
@@ -629,7 +629,7 @@ struct RandState {
   i32 lock;
 };
 
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  void initialize_rand_state(RandState *state, u32 i) {
@@ -667,19 +667,19 @@ struct LLVMRuntime {
   Ptr temporaries;
   RandState *rand_states;
   MemRequestQueue *mem_req_queue;
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  Ptr allocate(std::size_t size);
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  Ptr allocate_aligned(std::size_t size, std::size_t alignment);
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  Ptr request_allocate_aligned(std::size_t size, std::size_t alignment);
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  Ptr allocate_from_buffer(std::size_t size, std::size_t alignment);
@@ -702,7 +702,7 @@ __host__ __device__
   Ptr wasm_print_buffer = nullptr;
 
   template <typename T>
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  void set_result(std::size_t i, T t) {
@@ -712,7 +712,7 @@ __host__ __device__
   }
 
   template <typename T, typename... Args>
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  T *create(Args &&...args) {
@@ -750,7 +750,7 @@ struct NodeManager {
 
   using list_data_type = i32;
 
-  #ifdef ARCH_cuda
+  #ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  
@@ -794,7 +794,7 @@ __host__ __device__
     return data_list->ptr2index(ptr);
   }
 
-  #ifdef ARCH_cuda
+  #ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  void recycle(Ptr ptr) {
@@ -880,14 +880,14 @@ RUNTIME_STRUCT_FIELD(ListManager, num_elements);
 RUNTIME_STRUCT_FIELD(ListManager, max_num_elements_per_chunk);
 RUNTIME_STRUCT_FIELD(ListManager, element_size);
 
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  void taichi_assert(RuntimeContext *context, i32 test, const char *msg) {
   taichi_assert_runtime(context->runtime, test, msg);
 }
 
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  void taichi_assert_format(LLVMRuntime *runtime,
@@ -915,7 +915,7 @@ __host__ __device__
       }
     });
   }
-#if ARCH_cuda
+#if ARCH_amdgpu
   // Kill this CUDA thread.
   // asm("exit;");
 #else
@@ -933,14 +933,14 @@ __host__ __device__
 #endif
 }
 
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  void taichi_assert_runtime(LLVMRuntime *runtime, i32 test, const char *msg) {
   taichi_assert_format(runtime, test, msg, 0, nullptr);
 }
 
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  Ptr LLVMRuntime::allocate_aligned(std::size_t size, std::size_t alignment) {
@@ -950,10 +950,11 @@ __host__ __device__
   return (Ptr)vm_allocator(memory_pool, size, alignment);
 }
 
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  Ptr LLVMRuntime::allocate_from_buffer(std::size_t size, std::size_t alignment) {
+  //printf("size = %d\n", size);
   Ptr ret = nullptr;
   bool success = false;
   locked_task(&allocator_lock, [&] {
@@ -970,10 +971,11 @@ __host__ __device__
     }
   });
   if (!success) {
-#if ARCH_cuda
+#if ARCH_amdgpu
     // Here unfortunately we have to rely on a native CUDA assert failure to
     // halt the whole grid. Using a taichi_assert_runtime will not finish the
     // whole kernel execution immediately.
+    // FOR AMDGPU this is doesn't work!
     __assertfail(
         "Out of CUDA pre-allocated memory.\n"
         "Consider using ti.init(device_memory_fraction=0.9) or "
@@ -986,14 +988,14 @@ __host__ __device__
   return ret;
 }
 
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  Ptr LLVMRuntime::allocate(std::size_t size) {
   return allocate_aligned(size, 1);
 }
 
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  Ptr LLVMRuntime::request_allocate_aligned(std::size_t size,
@@ -1011,7 +1013,7 @@ __host__ __device__
 
     // wait for host to allocate
     while (r->ptr == nullptr) {
-#if defined(ARCH_cuda)
+#if defined(ARCH_amdgpu)
       system_memfence();
 #endif
     };
@@ -1075,6 +1077,8 @@ void runtime_initialize(
   runtime->total_requested_memory = 0;
 
   // runtime->allocate ready to use
+  // Gale
+  int threadidx = threadIdx.x;
   runtime->mem_req_queue = (MemRequestQueue *)runtime->allocate_aligned(
       sizeof(MemRequestQueue), taichi_page_size);
 
@@ -1122,7 +1126,7 @@ void runtime_initialize_snodes(LLVMRuntime *runtime,
   runtime->element_lists[root_id]->append(&elem);
 }
 
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  void LLVMRuntime_initialize_thread_pool(LLVMRuntime *runtime,
@@ -1150,7 +1154,7 @@ void runtime_allocate_ambient(LLVMRuntime *runtime,
       runtime->request_allocate_aligned(size, 128);
 }
 
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  void mutex_lock_i32(Ptr mutex) {
@@ -1158,179 +1162,179 @@ __host__ __device__
     ;
 }
 
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  void mutex_unlock_i32(Ptr mutex) {
   atomic_exchange_i32((i32 *)mutex, 0);
 }
 
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  int32 ctlz_i32(i32 val) {
   return 0;
 }
 
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  int32 cttz_i32(i32 val) {
   return 0;
 }
 
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  int32 cuda_compute_capability() {
   return 0;
 }
 
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  int32 cuda_ballot(bool bit) {
   return 0;
 }
 
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  i32 cuda_shfl_down_sync_i32(u32 mask, i32 val, i32 delta, int width) {
   return 0;
 }
 
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  i32 cuda_shfl_down_i32(i32 delta, i32 val, int width) {
   return 0;
 }
 
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  f32 cuda_shfl_down_sync_f32(u32 mask, f32 val, i32 delta, int width) {
   return 0;
 }
 
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  f32 cuda_shfl_down_f32(i32 delta, f32 val, int width) {
   return 0;
 }
 
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  i32 cuda_shfl_xor_sync_i32(u32 mask, i32 val, i32 delta, int width) {
   return 0;
 }
 
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  i32 cuda_shfl_up_sync_i32(u32 mask, i32 val, i32 delta, int width) {
   return 0;
 }
 
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  f32 cuda_shfl_up_sync_f32(u32 mask, f32 val, i32 delta, int width) {
   return 0;
 }
 
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  i32 cuda_shfl_sync_i32(u32 mask, i32 val, i32 delta, int width) {
   return 0;
 }
 
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  f32 cuda_shfl_sync_f32(u32 mask, f32 val, i32 delta, int width) {
   return 0;
 }
 
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  bool cuda_all_sync(u32 mask, bool bit) {
   return false;
 }
 
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  int32 cuda_all_sync_i32(u32 mask, int32 predicate) {
   return (int32)cuda_all_sync(mask, (bool)predicate);
 }
 
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  bool cuda_any_sync(u32 mask, bool bit) {
   return false;
 }
 
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  int32 cuda_any_sync_i32(u32 mask, int32 predicate) {
   return (int32)cuda_any_sync(mask, (bool)predicate);
 }
 
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  bool cuda_uni_sync(u32 mask, bool bit) {
   return false;
 }
 
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  int32 cuda_uni_sync_i32(u32 mask, int32 predicate) {
   return (int32)cuda_uni_sync(mask, (bool)predicate);
 }
 
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  int32 cuda_ballot_sync(int32 mask, bool bit) {
   return 0;
 }
 
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  int32 cuda_ballot_i32(int32 predicate) {
   return cuda_ballot_sync(UINT32_MAX, (bool)predicate);
 }
 
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  int32 cuda_ballot_sync_i32(u32 mask, int32 predicate) {
   return cuda_ballot_sync(mask, (bool)predicate);
 }
 
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  uint32 cuda_match_any_sync_i32(u32 mask, i32 value) {
   return 0;
 }
 
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  u32 cuda_match_all_sync_i32(u32 mask, i32 value) {
-#if ARCH_cuda
+#if ARCH_amdgpu
   //u32 ret;
   //asm volatile("match.all.sync.b32  %0, %1, %2;"
   //             : "=r"(ret)
@@ -1342,11 +1346,11 @@ __host__ __device__
 #endif
 }
 
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  uint32 cuda_match_any_sync_i64(u32 mask, i64 value) {
-#if ARCH_cuda
+#if ARCH_amdgpu
   //u32 ret;
   //asm volatile("match.any.sync.b64  %0, %1, %2;"
   //             : "=r"(ret)
@@ -1359,7 +1363,7 @@ __host__ __device__
 #endif
 }
 
-#if ARCH_cuda
+#if ARCH_amdgpu
 __host__ __device__ uint32 cuda_active_mask() {
   //unsigned int mask;
   //asm volatile("activemask.b32 %0;" : "=r"(mask));
@@ -1373,90 +1377,90 @@ uint32 cuda_active_mask() {
 }
 #endif
 
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  void block_barrier() {
 }
 
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  void warp_barrier(uint32 mask) {
 }
 
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  void block_memfence() {
 }
 
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  void grid_memfence() {
 }
 
 // these trivial functions are needed by the DEFINE_REDUCTION macro
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  i32 op_add_i32(i32 a, i32 b) {
   return a + b;
 }
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  f32 op_add_f32(f32 a, f32 b) {
   return a + b;
 }
 
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  i32 op_min_i32(i32 a, i32 b) {
   return std::min(a, b);
 }
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  f32 op_min_f32(f32 a, f32 b) {
   return std::min(a, b);
 }
 
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  i32 op_max_i32(i32 a, i32 b) {
   return std::max(a, b);
 }
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  f32 op_max_f32(f32 a, f32 b) {
   return std::max(a, b);
 }
 
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  i32 op_and_i32(i32 a, i32 b) {
   return a & b;
 }
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  i32 op_or_i32(i32 a, i32 b) {
   return a | b;
 }
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  i32 op_xor_i32(i32 a, i32 b) {
   return a ^ b;
 }
 
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 #define DEFINE_REDUCTION(op, dtype)                                                      \
 __host__ __device__ dtype warp_reduce_##op##_##dtype(uint32_t mask, dtype val) {         \
     for (int offset = 16; offset > 0; offset /= 2)                                       \
@@ -1513,7 +1517,7 @@ DEFINE_REDUCTION(xor, i32);
 
 // "Element", "component" are different concepts
 
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  void clear_list(LLVMRuntime *runtime, StructMeta *parent, StructMeta *child) {
@@ -1528,7 +1532,7 @@ __host__ __device__
 
 // For the root node there is only one container,
 // therefore we use a special kernel for more parallelism.
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  void element_listgen_root(LLVMRuntime *runtime,
@@ -1542,7 +1546,7 @@ __host__ __device__
   auto parent_lookup_element = parent->lookup_element;
   auto child_get_num_elements = child->get_num_elements;
   auto child_from_parent_element = child->from_parent_element;
-#if ARCH_cuda
+#if ARCH_amdgpu
   // All blocks share the only root container, which has only one child
   // container.
   // Each thread processes a subset of the child container for more parallelism.
@@ -1580,7 +1584,7 @@ __host__ __device__
   }
 }
 
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  void element_listgen_nonroot(LLVMRuntime *runtime,
@@ -1595,7 +1599,7 @@ __host__ __device__
   auto parent_lookup_element = parent->lookup_element;
   auto child_get_num_elements = child->get_num_elements;
   auto child_from_parent_element = child->from_parent_element;
-#if ARCH_cuda
+#if ARCH_amdgpu
   // Each block processes a slice of a parent container
   int i_start = block_idx();
   int i_step = grid_dim();
@@ -1683,7 +1687,7 @@ __host__ __device__ void parallel_struct_for(RuntimeContext *context,
                          int num_threads) {
   auto list = (context->runtime)->element_lists[snode_id];
   auto list_tail = list->size();
-#if ARCH_cuda
+#if ARCH_amdgpu
   int i = block_idx();
   // Note: CUDA requires compile-time constant local array sizes.
   // We use "1" here and modify it during codegen to tls_buffer_size.
@@ -1896,7 +1900,7 @@ __host__ __device__ void gpu_parallel_mesh_for(RuntimeContext *context,
 }
 
 __host__ __device__ i32 linear_thread_idx(RuntimeContext *context) {
-#if ARCH_cuda
+#if ARCH_amdgpu
   return block_idx() * block_dim() + thread_idx();
 #else
   return context->cpu_thread_id;
@@ -1909,7 +1913,7 @@ __host__ __device__ i32 linear_thread_idx(RuntimeContext *context) {
 #include "node_root.h"
 #include "node_bitmasked.h"
 
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  void ListManager::touch_chunk(int chunk_id) {
@@ -1928,7 +1932,7 @@ __host__ __device__
   }
 }
 
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  void ListManager::append(void *data_ptr) {
@@ -1939,7 +1943,7 @@ __host__ __device__
   }
 }
 
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  Ptr ListManager::allocate() {
@@ -2112,7 +2116,7 @@ struct printf_helper {
 
 template <typename... Args>
 void taichi_printf(LLVMRuntime *runtime, const char *format, Args &&...args) {
-#if ARCH_cuda
+#if ARCH_amdgpu
   printf_helper helper;
   helper.push_back(std::forward<Args>(args)...);
   cuda_vprintf((Ptr)format, helper.ptr());

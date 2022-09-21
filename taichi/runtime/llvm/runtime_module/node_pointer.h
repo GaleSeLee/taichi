@@ -12,7 +12,7 @@ i32 Pointer_get_num_elements(Ptr meta, Ptr node) {
 }
 
 bool is_representative(uint32 mask, uint64 value) {
-#if defined(ARCH_cuda)
+#if defined(ARCH_amdgpu)
   // If many threads in the mask share the same value, simply
   // elect one thread to return true and let others return false.
   if (cuda_compute_capability() < 70) {

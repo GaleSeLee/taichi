@@ -1,11 +1,11 @@
 #pragma once
 
 // These instructions should be replaced by CUDA intrinsics on GPUs
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 #include <hip/hip_runtime.h>
 #endif
 
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 #define DEFINE_ATOMIC_EXCHANGE(T)                               \
   __host__ __device__                                           \
   T atomic_exchange_##T(volatile T *dest, T val) {              \
@@ -29,7 +29,7 @@ DEFINE_ATOMIC_EXCHANGE(i64)
 DEFINE_ATOMIC_EXCHANGE(u32)
 DEFINE_ATOMIC_EXCHANGE(u64)
 
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 #define DEFINE_ATOMIC_OP_INTRINSIC(OP, T)                                \
   __host__ __device__                                                    \
   T atomic_##OP##_##T(volatile T *dest, T val) {                         \
@@ -60,7 +60,7 @@ DEFINE_ATOMIC_OP_INTRINSIC(xor, i64)
 DEFINE_ATOMIC_OP_INTRINSIC(xor, u32)
 DEFINE_ATOMIC_OP_INTRINSIC(xor, u64)
 
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 #define DEFINE_ADD(T)                     \
 __host__ __device__ T add_##T(T a, T b) { \
     return a + b;                         \
@@ -72,7 +72,7 @@ __host__ __device__ T add_##T(T a, T b) { \
   }
 #endif
 
-#ifdef ARCH_cuda
+#ifdef ARCH_amdgpu
 #define DEFINE_MIN(T)                       \
 __host__ __device__ T min_##T(T a, T b) {   \
     return b > a ? a : b;                   \
@@ -84,7 +84,7 @@ __host__ __device__ T min_##T(T a, T b) {   \
   }
 #endif 
 
-#ifdef ARCH_cuda          
+#ifdef ARCH_amdgpu         
 #define DEFINE_MAX(T)                       \
 __host__ __device__ T max_##T(T a, T b) {   \
     return b < a ? a : b;                   \
@@ -96,7 +96,7 @@ __host__ __device__ T max_##T(T a, T b) {   \
   }
 #endif
 
-#ifdef ARCH_cuda                                                              
+#ifdef ARCH_amdgpu                                                              
 #define DEFINE_ATOMIC_OP_COMP_EXCH(OP, T)                                     \
 __host__ __device__ T atomic_##OP##_##T(volatile T *dest, T inc) {            \
     T old_val;                                                                \

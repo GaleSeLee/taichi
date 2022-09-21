@@ -407,7 +407,6 @@ std::unique_ptr<llvm::Module> TaichiLLVMContext::module_from_file(
           get_constant(CUDAContext::get_instance().get_compute_capability()));
       TaichiLLVMContext::mark_inline(func);
     }
-#endif
 
     patch_intrinsic("thread_idx", Intrinsic::nvvm_read_ptx_sreg_tid_x);
     patch_intrinsic("cuda_clock_i64", Intrinsic::nvvm_read_ptx_sreg_clock64);
@@ -449,6 +448,7 @@ std::unique_ptr<llvm::Module> TaichiLLVMContext::module_from_file(
 
     patch_intrinsic("cuda_match_any_sync_i32",
                     Intrinsic::nvvm_match_any_sync_i32);
+#endif
 
     // LLVM 10.0.0 seems to have a bug on this intrinsic function
     /*
@@ -500,6 +500,7 @@ std::unique_ptr<llvm::Module> TaichiLLVMContext::module_from_file(
 
   if (arch_ == Arch::amdgpu) {
     module->setTargetTriple("amdgcn-amd-amdhsa");
+#ifdef TI_WITH_AMDGPU
     patch_intrinsic("thread_idx", llvm::Intrinsic::amdgcn_workitem_id_x);
     patch_intrinsic("block_idx", llvm::Intrinsic::amdgcn_workgroup_id_x);
     // TODO (Gale)
@@ -508,6 +509,7 @@ std::unique_ptr<llvm::Module> TaichiLLVMContext::module_from_file(
     patch_atomic_add("atomic_add_i64", llvm::AtomicRMWInst::Add);
     patch_atomic_add("atomic_add_f64", llvm::AtomicRMWInst::FAdd);
     patch_atomic_add("atomic_add_f32", llvm::AtomicRMWInst::FAdd);
+#endif
     link_module_with_amdgpu_libdevice(module);
   }
   return module;
