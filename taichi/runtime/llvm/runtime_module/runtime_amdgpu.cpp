@@ -64,12 +64,12 @@ using parallel_for_type = void (*)(void *thread_pool,
 
 // For fetching struct fields from device to host
 #define RUNTIME_STRUCT_FIELD(S, F)                                    \
-  extern "C" __device__ __host__ void runtime_##S##_get_##F(LLVMRuntime *runtime, S *s) { \
+  extern "C" __host__ __device__ void runtime_##S##_get_##F(LLVMRuntime *runtime, S *s) { \
     runtime->set_result(taichi_result_buffer_runtime_query_id, s->F); \
   }
 
 #define RUNTIME_STRUCT_FIELD_ARRAY(S, F)                                     \
-  extern "C" __device__ __host__ void runtime_##S##_get_##F(LLVMRuntime *runtime, S *s, int i) { \
+  extern "C" __host__ __device__ void runtime_##S##_get_##F(LLVMRuntime *runtime, S *s, int i) { \
     runtime->set_result(taichi_result_buffer_runtime_query_id, s->F[i]);     \
   }
 
@@ -162,19 +162,11 @@ __host__ __device__
 void mark_force_no_inline() {
 }
 
-i64 cuda_clock_i64() {
-  return 0;
-}
-
 #ifdef ARCH_amdgpu
 __host__ __device__
 #endif
 void system_memfence() {
 }
-
-#if ARCH_amdgpu
-void cuda_vprintf(Ptr format, Ptr arg);
-#endif
 
 // Note that strlen is undefined on the CUDA backend, so we manually
 // implement it here.
@@ -401,7 +393,10 @@ STRUCT_FIELD_ARRAY(RuntimeContext, args);
 STRUCT_FIELD(RuntimeContext, runtime);
 STRUCT_FIELD(RuntimeContext, result_buffer)
 
-__host__ __device__ int32 RuntimeContext_get_extra_args(RuntimeContext *ctx, int32 i, int32 j) {
+#ifdef ARCH_amdgpu
+__host__ __device__
+#endif
+int32 RuntimeContext_get_extra_args(RuntimeContext *ctx, int32 i, int32 j) {
   return ctx->extra_args[i][j];
 }
 
@@ -457,13 +452,6 @@ __host__ __device__
  void taichi_assert_runtime(LLVMRuntime *runtime, i32 test, const char *msg);
 #define TI_ASSERT_INFO(x, msg) taichi_assert(context, (int)(x), msg)
 #define TI_ASSERT(x) TI_ASSERT_INFO(x, #x)
-
-void ___stubs___() {
-#if ARCH_amdgpu
-  cuda_vprintf(nullptr, nullptr);
-  cuda_clock_i64();
-#endif
-}
 }
 
 #ifdef ARCH_amdgpu
@@ -490,7 +478,7 @@ struct ListManager {
   i32 num_elements;
   LLVMRuntime *runtime;
 
-  #ifdef ARCH_amdgpu
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
 
@@ -507,12 +495,12 @@ __host__ __device__
     log2chunk_num_elements = taichi::log2int(num_elements_per_chunk);
   }
 
-  #ifdef ARCH_amdgpu
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  void append(void *data_ptr);
 
-  #ifdef ARCH_amdgpu
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  i32 reserve_new_element() {
@@ -522,25 +510,25 @@ __host__ __device__
     return i;
   }
 
-  template <typename T>
-  #ifdef ARCH_amdgpu
+ template <typename T>
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  void push_back(const T &t) {
     this->append((void *)&t);
   }
 
-  #ifdef ARCH_amdgpu
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  Ptr allocate();
 
-  #ifdef ARCH_amdgpu
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  void touch_chunk(int chunk_id);
 
-  #ifdef ARCH_amdgpu
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  i32 get_num_active_chunks() {
@@ -551,21 +539,21 @@ __host__ __device__
     return counter;
   }
 
-  #ifdef ARCH_amdgpu
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  void clear() {
     num_elements = 0;
   }
 
-  #ifdef ARCH_amdgpu
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  void resize(i32 n) {
     num_elements = n;
   }
 
-  #ifdef ARCH_amdgpu
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  Ptr get_element_ptr(i32 i) {
@@ -573,8 +561,8 @@ __host__ __device__
            element_size * (i & ((1 << log2chunk_num_elements) - 1));
   }
 
-  template <typename T>
-  #ifdef ARCH_amdgpu
+template <typename T>
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  T &get(i32 i) {
@@ -586,14 +574,14 @@ __host__ __device__
     return get_element_ptr(i);
   }
 
-  #ifdef ARCH_amdgpu
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  i32 size() {
     return num_elements;
   }
 
-  #ifdef ARCH_amdgpu
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  i32 ptr2index(Ptr ptr) {
@@ -750,10 +738,9 @@ struct NodeManager {
 
   using list_data_type = i32;
 
-  #ifdef ARCH_amdgpu
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
- 
   NodeManager(LLVMRuntime *runtime,
               i32 element_size,
               i32 chunk_num_elements = -1)
@@ -794,7 +781,7 @@ __host__ __device__
     return data_list->ptr2index(ptr);
   }
 
-  #ifdef ARCH_amdgpu
+#ifdef ARCH_amdgpu
 __host__ __device__
 #endif
  void recycle(Ptr ptr) {
@@ -802,7 +789,9 @@ __host__ __device__
     recycled_list->append(&index);
   }
 
+#ifdef ARCH_amdgpu
 __host__ __device__ 
+#endif
   void gc_serial() {
     // compact free list
     for (int i = free_list_used; i < free_list->size(); i++) {
@@ -829,19 +818,19 @@ __host__ __device__
 
 extern "C" {
 
-__device__ __host__ void RuntimeContext_store_result(RuntimeContext *ctx, u64 ret, u32 idx) {
+__host__ __device__ void RuntimeContext_store_result(RuntimeContext *ctx, u64 ret, u32 idx) {
   ctx->result_buffer[taichi_result_buffer_ret_value_id + idx] = ret;
 }
 
-__device__ __host__ void LLVMRuntime_profiler_start(LLVMRuntime *runtime, Ptr kernel_name) {
+__host__ __device__ void LLVMRuntime_profiler_start(LLVMRuntime *runtime, Ptr kernel_name) {
   runtime->profiler_start(runtime->profiler, kernel_name);
 }
 
-__device__ __host__ void LLVMRuntime_profiler_stop(LLVMRuntime *runtime) {
+__host__ __device__ void LLVMRuntime_profiler_stop(LLVMRuntime *runtime) {
   runtime->profiler_stop(runtime->profiler);
 }
 
-__device__ __host__ Ptr get_temporary_pointer(LLVMRuntime *runtime, u64 offset) {
+__host__ __device__ Ptr get_temporary_pointer(LLVMRuntime *runtime, u64 offset) {
   return runtime->temporaries + offset;
 }
 
@@ -899,6 +888,7 @@ __host__ __device__
 
   if (!enable_assert || test != 0)
     return;
+
   if (!runtime->error_code) {
     locked_task(&runtime->error_message_lock, [&] {
       if (!runtime->error_code) {
@@ -907,7 +897,7 @@ __host__ __device__
         memset(runtime->error_message_template, 0,
                taichi_error_message_max_length);
         memcpy(runtime->error_message_template, format,
-               std::min(taichi_strlen(format),
+                std::min(taichi_strlen(format),
                         taichi_error_message_max_length - 1));
         for (int i = 0; i < num_arguments; i++) {
           runtime->error_message_arguments[i] = arguments[i];
@@ -915,9 +905,10 @@ __host__ __device__
       }
     });
   }
-#if ARCH_amdgpu
-  // Kill this CUDA thread.
-  // asm("exit;");
+#ifdef ARCH_amdgpu
+  // ref
+  // https://rocmdocs.amd.com/en/latest/GCN_ISA_Manuals/testdocbook.html#testdocbook
+  asm("S_ENDPGM");
 #else
   // TODO: properly kill this CPU thread here, considering the containing
   // ThreadPool structure.
@@ -954,7 +945,6 @@ __host__ __device__
 __host__ __device__
 #endif
  Ptr LLVMRuntime::allocate_from_buffer(std::size_t size, std::size_t alignment) {
-  //printf("size = %d\n", size);
   Ptr ret = nullptr;
   bool success = false;
   locked_task(&allocator_lock, [&] {
@@ -970,21 +960,12 @@ __host__ __device__
       success = false;
     }
   });
+
   if (!success) {
-#if ARCH_amdgpu
-    // Here unfortunately we have to rely on a native CUDA assert failure to
-    // halt the whole grid. Using a taichi_assert_runtime will not finish the
-    // whole kernel execution immediately.
-    // FOR AMDGPU this is doesn't work!
-    __assertfail(
-        "Out of CUDA pre-allocated memory.\n"
-        "Consider using ti.init(device_memory_fraction=0.9) or "
-        "ti.init(device_memory_GB=4) to allocate more"
-        " GPU memory",
-        "Taichi JIT", 0, "allocate_from_buffer", 1);
-#endif
+    // TODO
+    asm("S_ENDPGM");
+    taichi_assert_runtime(this, success, "Out of pre-allocated memory");
   }
-  taichi_assert_runtime(this, success, "Out of pre-allocated memory");
   return ret;
 }
 
@@ -2117,9 +2098,6 @@ struct printf_helper {
 template <typename... Args>
 void taichi_printf(LLVMRuntime *runtime, const char *format, Args &&...args) {
 #if ARCH_amdgpu
-  printf_helper helper;
-  helper.push_back(std::forward<Args>(args)...);
-  cuda_vprintf((Ptr)format, helper.ptr());
 #else
   runtime->host_printf(format, args...);
 #endif

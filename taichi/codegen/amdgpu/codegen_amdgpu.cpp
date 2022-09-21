@@ -227,7 +227,6 @@ else if (op == UnaryOpType::x) {                                          \
         current_offload = stmt;
         using Type = OffloadedStmt::TaskType;
         if (stmt->task_type == Type::gc) {
-            std::cout << "[GALE] GC" << std::endl;
             emit_amdgpu_gc(stmt);
         } else {
             init_offloaded_task_function(stmt);
