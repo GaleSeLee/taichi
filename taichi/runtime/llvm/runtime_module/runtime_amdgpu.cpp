@@ -11,7 +11,7 @@
 #endif
 
 #include "taichi/inc/constants.h"
-#include "taichi/inc/cuda_kernel_utils.inc.h"
+#include "taichi/inc/amdgpu_kernel_utils.inc.h"
 #include "taichi/math/arithmetic.h"
 
 struct RuntimeContext;
