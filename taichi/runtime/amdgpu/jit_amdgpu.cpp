@@ -40,6 +40,10 @@ JITModule *JITSessionAMDGPU ::add_module(std::unique_ptr<llvm::Module> M,
   if (std::system(lld_cmd.c_str())) 
       TI_ERROR(fmt::format("Generate {} Error", hsaco_filename));
 
+  // [GALE]
+  if (hsaco_filename == "taichi_kernel_gcn_0001.hsaco")
+    hsaco_filename = "taichi_kernel_gcn_0002.hsaco";
+
   std::string hsaco_str = load_hsaco(hsaco_filename);
   AMDGPUDriver::get_instance().module_load_data(&amdgpu_module, hsaco_str.c_str());
   TI_TRACE("AMDGPU module load time : {}ms", (Time::get_time() - t) * 1000);
@@ -80,7 +84,7 @@ std::string JITSessionAMDGPU::compile_module_to_gcn(
   function_pass_manager.add(llvm::createTargetTransformInfoWrapperPass(machine->getTargetIRAnalysis()));
 
   llvm::PassManagerBuilder builder;
-  builder.OptLevel = 3;
+  builder.OptLevel = 0;
   builder.Inliner = llvm::createFunctionInliningPass(builder.OptLevel, 0, false);
   machine->adjustPassManager(builder);
   builder.populateFunctionPassManager(function_pass_manager);
@@ -99,6 +103,11 @@ std::string JITSessionAMDGPU::compile_module_to_gcn(
   module_pass_manager.run(*llvm_module);
 
   std::string obj_str(outstr.begin(), outstr.end());
+  if (this->config_->print_kernel_llvm_ir_optimized) {
+    static FileSequenceWriter writer("taichi_kernel_amdgpu_llvm_ir_optimized_{:04d}.ll",
+                                     "unoptimized LLVM IR (AMDGPU)");
+    writer.write(llvm_module.get());
+  }
   return obj_str;
 }
 

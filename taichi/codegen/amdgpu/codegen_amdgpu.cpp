@@ -432,7 +432,7 @@ FunctionType AMDGPUModuleToFunctionConverter::convert(
                 }
             }
             TI_TRACE("Launching kernel");
-            //AMDGPUDriver::get_instance().mem_free((void *)context_pointer);
+            AMDGPUDriver::get_instance().mem_free((void *)context_pointer);
             
         };
 }
