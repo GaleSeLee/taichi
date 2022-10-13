@@ -490,10 +490,10 @@ void LlvmRuntimeExecutor::initialize_llvm_runtime_snodes(
       break;
     }
   }
-
-  runtime_jit->call<void *, std::size_t, int, int, int, std::size_t, Ptr>(
+  const int padding = 0;
+  runtime_jit->call<void *, std::size_t, int, int, int, int, std::size_t, Ptr>(
       "runtime_initialize_snodes", llvm_runtime_, root_size, root_id,
-      (int)snode_metas.size(), tree_id, rounded_size, root_buffer, all_dense);
+      (int)snode_metas.size(), tree_id, padding, rounded_size, root_buffer, all_dense);
 
   for (size_t i = 0; i < snode_metas.size(); i++) {
     if (is_gc_able(snode_metas[i].type)) {

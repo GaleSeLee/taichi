@@ -17,7 +17,7 @@ CompileConfig::CompileConfig() {
   print_benchmark_stat = false;
   use_llvm = true;
   demote_dense_struct_fors = true;
-  advanced_optimization = false;
+  advanced_optimization = true;
   constant_folding = true;
   max_vector_width = 8;
   debug = false;

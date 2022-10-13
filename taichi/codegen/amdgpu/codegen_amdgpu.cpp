@@ -46,6 +46,7 @@ public:
     }
 
     void emit_extra_unary(UnaryOpStmt *stmt) override {
+        auto input = llvm_val[stmt->operand];
         auto input_taichi_type = stmt->operand->ret_type;
         auto op = stmt->op_type;
 
@@ -54,22 +55,22 @@ public:
 #define UNARY_STD(x)                                                      \
 else if (op == UnaryOpType::x) {                                          \
     if (input_taichi_type->is_primitive(PrimitiveTypeID::f16)) {          \
-        llvm_val[stmt] = create_call("__ocml_" #x "_f16");                \
+        llvm_val[stmt] = create_call("__ocml_" #x "_f16", input);         \
     } else if (input_taichi_type->is_primitive(PrimitiveTypeID::f32)) {   \
-        llvm_val[stmt] = create_call("__ocml_" #x "_f32");                \
+        llvm_val[stmt] = create_call("__ocml_" #x "_f32", input);         \
     } else if (input_taichi_type->is_primitive(PrimitiveTypeID::f64)) {   \
-        llvm_val[stmt] = create_call("__ocml_" #x "_f64");                \
+        llvm_val[stmt] = create_call("__ocml_" #x "_f64", input);         \
     } else {                                                              \
         TI_NOT_IMPLEMENTED                                                \   
     }                                                                     \
 }
         if (op == UnaryOpType::abs) {
             if (input_taichi_type->is_primitive(PrimitiveTypeID::f16)) {          
-                llvm_val[stmt] = create_call("__ocml_fasb_f16");                
+                llvm_val[stmt] = create_call("__ocml_fasb_f16", input); 
             } else if (input_taichi_type->is_primitive(PrimitiveTypeID::f32)) {   
-                llvm_val[stmt] = create_call("__ocml_fabs_f32");                
+                llvm_val[stmt] = create_call("__ocml_fabs_f32", input); 
             } else if (input_taichi_type->is_primitive(PrimitiveTypeID::f64)) {   
-                llvm_val[stmt] = create_call("__ocml_fabs_f64");                
+                llvm_val[stmt] = create_call("__ocml_fabs_f64", input); 
             } else {                                                              
                 TI_NOT_IMPLEMENTED
             }
@@ -303,11 +304,11 @@ else if (op == UnaryOpType::x) {                                          \
 #define BINARY_STD(x)                                                           \
     if (op == BinaryOpType::x) {                                                \
         if (ret_taichi_type->is_primitive(PrimitiveTypeID::f16)) {            \
-            llvm_val[stmt] = create_call("__ocml_" #x "_16f", {lhs, rhs});        \
+            llvm_val[stmt] = create_call("__ocml_" #x "_f16", {lhs, rhs});        \
         } else if (ret_taichi_type->is_primitive(PrimitiveTypeID::f32)) {     \
-            llvm_val[stmt] = create_call("__ocml_" #x "_32f", {lhs, rhs});        \
+            llvm_val[stmt] = create_call("__ocml_" #x "_f32", {lhs, rhs});        \
         } else if (ret_taichi_type->is_primitive(PrimitiveTypeID::i64)) {     \
-            llvm_val[stmt] = create_call("__ocml_" #x "_64f", {lhs, rhs});        \
+            llvm_val[stmt] = create_call("__ocml_" #x "_f64", {lhs, rhs});        \
         } else {                                                                \
             TI_NOT_IMPLEMENTED                                                  \
         }                                                                       \

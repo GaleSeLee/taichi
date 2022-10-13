@@ -934,6 +934,7 @@ void runtime_initialize_snodes(LLVMRuntime *runtime,
                                const int root_id,
                                const int num_snodes,
                                const int snode_tree_id,
+                               const int padding,
                                std::size_t rounded_size,
                                Ptr ptr,
                                bool all_dense) {
