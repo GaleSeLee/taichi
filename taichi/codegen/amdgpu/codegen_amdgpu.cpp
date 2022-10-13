@@ -380,6 +380,8 @@ FunctionType AMDGPUModuleToFunctionConverter::convert(
                     if (context.device_allocation_type[i] == 
                         RuntimeContext::DevAllocType::kNone) {
                             unsigned int attr_val = 0;
+                            // Gale
+                            // Need to check
                             uint32_t ret_code = AMDGPUDriver::get_instance().mem_get_attribute.call(
                                 &attr_val, HIP_POINTER_ATTRIBUTE_MEMORY_TYPE,
                                 (void *)arg_buffers[i]);

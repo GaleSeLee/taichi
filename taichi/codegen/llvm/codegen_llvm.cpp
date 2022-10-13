@@ -1460,9 +1460,13 @@ void TaskCodeGenLLVM::create_global_load(GlobalLoadStmt *stmt,
     auto physical_type =
         tlctx->get_data_type(get_ch->input_snode->physical_type);
     auto [byte_ptr, bit_offset] = load_bit_ptr(ptr);
+#ifdef TI_WITH_AMDGPU
+    auto physical_value = builder->CreateLoad(physical_type, byte_ptr);
+#else
     auto physical_value = should_cache_as_read_only
                               ? create_intrinsic_load(byte_ptr, physical_type)
                               : builder->CreateLoad(physical_type, byte_ptr);
+#endif
     if (auto qit = val_type->cast<QuantIntType>()) {
       llvm_val[stmt] = extract_quant_int(physical_value, bit_offset, qit);
     } else if (auto qfxt = val_type->cast<QuantFixedType>()) {
@@ -1478,6 +1482,10 @@ void TaskCodeGenLLVM::create_global_load(GlobalLoadStmt *stmt,
     }
   } else {
     // Byte pointer case.
+#ifdef TI_WITH_AMDGPU
+    llvm_val[stmt] =
+        builder->CreateLoad(tlctx->get_data_type(stmt->ret_type), ptr);
+#else
     if (should_cache_as_read_only) {
       llvm_val[stmt] =
           create_intrinsic_load(ptr, tlctx->get_data_type(stmt->ret_type));
@@ -1485,6 +1493,7 @@ void TaskCodeGenLLVM::create_global_load(GlobalLoadStmt *stmt,
       llvm_val[stmt] =
           builder->CreateLoad(tlctx->get_data_type(stmt->ret_type), ptr);
     }
+#endif
   }
 }
 
