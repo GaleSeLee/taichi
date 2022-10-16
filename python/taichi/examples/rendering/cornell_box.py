@@ -4,7 +4,7 @@ import numpy as np
 
 import taichi as ti
 
-ti.init(arch=ti.gpu)
+ti.init(arch=ti.amdgpu)
 res = (800, 800)
 color_buffer = ti.Vector.field(3, dtype=ti.f32, shape=res)
 count_var = ti.field(ti.i32, shape=(1, ))
