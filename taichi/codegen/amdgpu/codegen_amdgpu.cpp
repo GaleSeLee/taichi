@@ -85,6 +85,22 @@ else if (op == UnaryOpType::x) {                                          \
                 TI_NOT_IMPLEMENTED
             }
         }
+        else if (op == UnaryOpType::sgn) {
+            if (input_taichi_type->is_primitive(PrimitiveTypeID::i32)) {
+                auto ashr_ = builder->CreateAShr(input, 31);
+                auto sub_ = builder->CreateSub(0, input);
+                auto lshr_ = builder->CreateLShr(sub_, 31);
+                llvm_val[stmt] = builder->CreateOr(ashr_, lshr_);
+            } else if (input_taichi_type->is_primitive(PrimitiveTypeID::f32)) {
+                auto ashr_ = builder->CreateAShr(input, 31);
+                auto sub_ = builder->CreateSub(0, input);
+                auto lshr_ = builder->CreateLShr(sub_, 31);
+                llvm_val[stmt] = builder->CreateOr(ashr_, lshr_);
+            }
+            else {
+                TI_NOT_IMPLEMENTED
+            }
+        }
         UNARY_STD(cos)
         UNARY_STD(acos)
         UNARY_STD(sin)
