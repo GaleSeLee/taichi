@@ -503,8 +503,6 @@ std::unique_ptr<llvm::Module> TaichiLLVMContext::module_from_file(
 #ifdef TI_WITH_AMDGPU
     patch_intrinsic("thread_idx", llvm::Intrinsic::amdgcn_workitem_id_x);
     patch_intrinsic("block_idx", llvm::Intrinsic::amdgcn_workgroup_id_x);
-    // TODO (Gale)
-    // check the atomic intrinsic on amdgpu
     patch_atomic_add("atomic_add_i32", llvm::AtomicRMWInst::Add);
     patch_atomic_add("atomic_add_i64", llvm::AtomicRMWInst::Add);
     patch_atomic_add("atomic_add_f64", llvm::AtomicRMWInst::FAdd);
@@ -553,22 +551,10 @@ void TaichiLLVMContext::link_module_with_amdgpu_libdevice(
     std::unique_ptr<llvm::Module> &module) {
   TI_ASSERT(arch_ == Arch::amdgpu);
   std::string libdevice_paths[] = {
-    "oclc_daz_opt_on",
     "ocml",
-    "ockl",
-    "oclc_correctly_rounded_sqrt_off",
-    "oclc_correctly_rounded_sqrt_on",
-    "oclc_daz_opt_off",
-    "oclc_finite_only_off",
-    "oclc_finite_only_on",
-    "oclc_isa_version_1030",  
-    "oclc_unsafe_math_off",
-    "oclc_unsafe_math_on",
     "oclc_wavefrontsize64_off"
   };
   for (auto &libdevice : libdevice_paths) {
-    // TODO (Gale)
-    // del the hardcode path
     std::string bc_path = "/opt/rocm/amdgcn/bitcode/";
     auto libdevice_module = 
         module_from_bitcode_file(bc_path + libdevice + ".bc",
@@ -581,8 +567,6 @@ void TaichiLLVMContext::link_module_with_amdgpu_libdevice(
       }
     }
 
-    // TODO (Gale) linkonce_odr
-    // Temporary solution
     for (auto &f : libdevice_module->functions()) {
       auto func_ = module->getFunction(f.getName());
       if (!func_ && starts_with(f.getName().lower(), "__" + libdevice))

@@ -764,6 +764,9 @@ __host__ __device__
         runtime->create<ListManager>(runtime, element_size, chunk_num_elements);
   }
 
+#ifdef ARCH_amdgpu
+__host__ __device__
+#endif
   Ptr allocate() {
     int old_cursor = atomic_add_i32(&free_list_used, 1);
     i32 l;
@@ -777,6 +780,9 @@ __host__ __device__
     return data_list->get_element_ptr(l);
   }
 
+#ifdef ARCH_amdgpu
+__host__ __device__
+#endif
   i32 locate(Ptr ptr) {
     return data_list->ptr2index(ptr);
   }
@@ -808,7 +814,7 @@ __host__ __device__
       auto ptr = data_list->get_element_ptr(idx);
       for (int jj = 0; jj < element_size; jj++)
          *((char *)ptr+jj) = 0;
-         // Gale
+         // TODO
       //std::memset(ptr, 0, element_size);
       free_list->push_back(idx);
     }
@@ -1058,8 +1064,6 @@ void runtime_initialize(
   runtime->total_requested_memory = 0;
 
   // runtime->allocate ready to use
-  // Gale
-  int threadidx = threadIdx.x;
   runtime->mem_req_queue = (MemRequestQueue *)runtime->allocate_aligned(
       sizeof(MemRequestQueue), taichi_page_size);
 
@@ -1332,12 +1336,6 @@ __host__ __device__
 #endif
  uint32 cuda_match_any_sync_i64(u32 mask, i64 value) {
 #if ARCH_amdgpu
-  //u32 ret;
-  //asm volatile("match.any.sync.b64  %0, %1, %2;"
-  //             : "=r"(ret)
-  //             : "l"(value), "r"(mask));
-  //return ret;
-  // Gale
   return 0;
 #else
   return 0;
@@ -1346,10 +1344,6 @@ __host__ __device__
 
 #if ARCH_amdgpu
 __host__ __device__ uint32 cuda_active_mask() {
-  //unsigned int mask;
-  //asm volatile("activemask.b32 %0;" : "=r"(mask));
-  //return mask;
-  // Gale
   return 0;
 }
 #else
@@ -1668,6 +1662,7 @@ __host__ __device__ void parallel_struct_for(RuntimeContext *context,
                          int num_threads) {
   auto list = (context->runtime)->element_lists[snode_id];
   auto list_tail = list->size();
+// TODO check
 #if ARCH_amdgpu
   int i = block_idx();
   // Note: CUDA requires compile-time constant local array sizes.
@@ -1789,8 +1784,8 @@ __host__ __device__ void gpu_parallel_range_for(RuntimeContext *context,
   // threadIdx BlockIdx
   // BlockDim gridDim
   int idx = threadIdx.x + blockDim.x * blockIdx.x + begin;
-  char tls_buffer;
-  auto tls_ptr = &tls_buffer;
+  char tls_buffer[64];
+  auto tls_ptr = tls_buffer;
 
   if (prologue)
     prologue(context, tls_ptr);

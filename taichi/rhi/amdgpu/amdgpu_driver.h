@@ -12,12 +12,9 @@ constexpr uint32 HIP_STREAM_NON_BLOCKING = 0x1;
 constexpr uint32 HIP_MEM_ATTACH_GLOBAL = 0x1;
 constexpr uint32 HIP_MEM_ADVISE_SET_PREFERRED_LOCATION = 3;
 constexpr uint32 HIP_DEVICE_ATTRIBUTE_MAX_BLOCK_DIM_X = 26;
-//constexpr uint32 HIP_DEVICE_ATTRIBUTE_MAX_BLOCKS_PER_MULTIPROCESSOR = 25;
 constexpr uint32 HIP_DEVICE_ATTRIBUTE_MULTIPROCESSOR_COUNT = 63;
-// The Capability Major and minor don't represent the version of ROCm
-// Currently, I don't know the meaning of these
-constexpr uint32 HIP_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MAJOR = 23;
-constexpr uint32 HIP_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MINOR = 61;
+constexpr uint32 HIP_DEVICE_PROPERTIES_STRUCT_SIZE = 792;
+constexpr uint32 HIP_DEVICE_GCN_ARCH = 98;
 constexpr uint32 HIP_ERROR_ASSERT = 710;
 constexpr uint32 HIP_JIT_MAX_REGISTERS = 0;
 constexpr uint32 HIP_POINTER_ATTRIBUTE_MEMORY_TYPE = 2;

@@ -68,7 +68,7 @@ std::string JITSessionAMDGPU::compile_module_to_gcn(
   auto target = llvm::TargetRegistry::lookupTarget(triple_str, error_str);
   llvm::TargetOptions options;
   std::unique_ptr<llvm::TargetMachine> machine(target->createTargetMachine(
-      "amdgcn-amd-amdhsa", "gfx1030", "", options, llvm::Reloc::PIC_, 
+      triple_str , AMDGPUContext::get_instance().get_mcpu(), "", options, llvm::Reloc::PIC_, 
       llvm::CodeModel::Small, llvm::CodeGenOpt::Aggressive));
     
   llvm_module->setDataLayout(machine->createDataLayout());

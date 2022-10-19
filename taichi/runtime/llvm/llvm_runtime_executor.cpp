@@ -112,20 +112,18 @@ LlvmRuntimeExecutor::LlvmRuntimeExecutor(CompileConfig &config,
 #endif
   } else if (config.arch == Arch::amdgpu) {
 #if defined(TI_WITH_AMDGPU)
-    // TODO (Gale)
-    // alter block to workgroup
-    int num_CUs{1};
+    int num_workgroups{1};
     AMDGPUDriver::get_instance().device_get_attribute(
-      &num_CUs, HIP_DEVICE_ATTRIBUTE_MULTIPROCESSOR_COUNT, 0);
+      &num_workgroups, HIP_DEVICE_ATTRIBUTE_MULTIPROCESSOR_COUNT, 0);
     int query_max_block_dim{1024};
     AMDGPUDriver::get_instance().device_get_attribute(
       &query_max_block_dim, HIP_DEVICE_ATTRIBUTE_MAX_BLOCK_DIM_X, 0);
-    int query_max_block_per_cu{32};
+    int query_max_block_per_workgroup{32};
     if (config.max_block_dim == 0) {
       config.max_block_dim = query_max_block_dim;
     }
     if (config.saturating_grid_dim == 0) {
-      config.saturating_grid_dim = num_CUs * query_max_block_per_cu * 2;
+      config.saturating_grid_dim = num_workgroups * query_max_block_per_workgroup * 2;
     }
 #endif
   }

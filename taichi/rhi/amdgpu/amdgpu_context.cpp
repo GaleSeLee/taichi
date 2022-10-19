@@ -24,31 +24,18 @@ AMDGPUContext::AMDGPUContext()
 
   TI_TRACE("Using AMDGPU device [id=0]: {}", name);
 
-  // TODO: Find the way to get the arch version (gfx1030)
-
-  // int cc_major, cc_minor;
-  // driver_.device_get_attribute(
-  //     &cc_major, CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MAJOR, 0);
-  // driver_.device_get_attribute(
-  //     &cc_minor, CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MINOR, 0);
-
   driver_.context_create(&context_, 0, device_);
 
   const auto GB = std::pow(1024.0, 3.0);
   TI_TRACE("Total memory {:.2f} GB; free memory {:.2f} GB",
            get_total_memory() / GB, get_free_memory() / GB);
 
-  // compute_capability_ = cc_major * 10 + cc_minor;
+  void * hip_device_prop = std::malloc(HIP_DEVICE_PROPERTIES_STRUCT_SIZE);
+  driver_.device_get_prop(hip_device_prop, device_);
+  compute_capability_ = *((int *)hip_device_prop + HIP_DEVICE_GCN_ARCH);
+  std::free(hip_device_prop);
 
-  // if (compute_capability_ > 75) {
-    // The NVPTX backend of LLVM 10.0.0 does not seem to support
-    // compute_capability > 75 yet. See
-    // llvm-10.0.0.src/build/lib/Target/NVPTX/NVPTXGenSubtargetInfo.inc
-  //   compute_capability_ = 75;
-  // }
-
-  // mcpu_ = fmt::format("sm_{}", compute_capability_);
-  mcpu_ = "gfx1030";
+  mcpu_ = fmt::format("gfx{}", compute_capability_);
 
   TI_TRACE("Emitting AMDGPU code for {}", mcpu_);
 }

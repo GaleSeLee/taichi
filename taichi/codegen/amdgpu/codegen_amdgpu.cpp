@@ -50,8 +50,6 @@ public:
         auto input_taichi_type = stmt->operand->ret_type;
         auto op = stmt->op_type;
 
-// TODO (Gale)
-// add int type support
 #define UNARY_STD(x)                                                      \
 else if (op == UnaryOpType::x) {                                          \
     if (input_taichi_type->is_primitive(PrimitiveTypeID::f16)) {          \
@@ -64,7 +62,14 @@ else if (op == UnaryOpType::x) {                                          \
         TI_NOT_IMPLEMENTED                                                \   
     }                                                                     \
 }
-        if (op == UnaryOpType::abs) {
+        if (op == UnaryOpType::logic_not) {
+            if (input_taichi_type->is_primitive(PrimitiveTypeID::i32)) {
+                llvm_val[stmt] = create_call("logic_not_i32", input);
+            } else {
+                TI_NOT_IMPLEMENTED
+            }
+        }
+        else if (op == UnaryOpType::abs) {
             if (input_taichi_type->is_primitive(PrimitiveTypeID::f16)) {          
                 llvm_val[stmt] = create_call("__ocml_fasb_f16", input); 
             } else if (input_taichi_type->is_primitive(PrimitiveTypeID::f32)) {   
@@ -85,15 +90,13 @@ else if (op == UnaryOpType::x) {                                          \
         UNARY_STD(log)
         UNARY_STD(sqrt)
         else {
-            TI_NOT_IMPLEMENTED
             TI_P(unary_op_type_name(op));
+            TI_NOT_IMPLEMENTED
         }
 #undef UNARY_STD
     }
 
     llvm::Value *optimized_reduction(AtomicOpStmt *stmt) override {
-        // TODO (Gale)
-        // Check
         if (!stmt->is_reduction) {
             return nullptr;
         }
@@ -418,7 +421,6 @@ FunctionType AMDGPUModuleToFunctionConverter::convert(
                                                 (void *)&context_pointer, (int)sizeof(RuntimeContext *));
                 }
             }
-            // TODO (Gale)
             AMDGPUDriver::get_instance().stream_synchronize(nullptr);
             TI_TRACE("Launching kernel");
             AMDGPUDriver::get_instance().mem_free((void *)context_pointer);

@@ -4,6 +4,7 @@ PER_AMDGPU_FUNCTION(init, hipInit, unsigned int);
 // Device management
 PER_AMDGPU_FUNCTION(device_get_count, hipGetDeviceCount, int *);
 PER_AMDGPU_FUNCTION(device_get_attribute, hipDeviceGetAttribute, int *, uint32, int); 
+PER_AMDGPU_FUNCTION(device_get_prop, hipGetDeviceProperties, void *, void *);
 PER_AMDGPU_FUNCTION(device_get_name, hipDeviceGetName, char *, int, void *);
 PER_AMDGPU_FUNCTION(device_get, hipDeviceGet, void *, void *);
 

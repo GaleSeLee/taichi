@@ -16,6 +16,7 @@ class AMDGPUContext {
   void *device_;
   void *context_;
   int dev_count_;
+  int compute_capability_;
   std::string mcpu_;
   std::mutex lock_;
   AMDGPUDriver &driver_;
@@ -54,6 +55,10 @@ class AMDGPUContext {
 
   void make_current() {
     driver_.context_set_current(context_);
+  }
+
+  int get_compute_capability() const {
+    return compute_capability_;
   }
 
   ~AMDGPUContext();
