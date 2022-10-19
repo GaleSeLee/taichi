@@ -76,7 +76,12 @@ else if (op == UnaryOpType::x) {                                          \
                 llvm_val[stmt] = create_call("__ocml_fabs_f32", input); 
             } else if (input_taichi_type->is_primitive(PrimitiveTypeID::f64)) {   
                 llvm_val[stmt] = create_call("__ocml_fabs_f64", input); 
-            } else {                                                              
+            } else if (input_taichi_type->is_primitive(PrimitiveTypeID::i32)) {                                                              
+                auto ashr_ = builder->CreateAShr(input, 31);
+                auto xor_ = builder->CreateXor(ashr_, input);
+                llvm_val[stmt] = builder->CreateSub(xor_, ashr_, "", false, true);
+            }
+            else {
                 TI_NOT_IMPLEMENTED
             }
         }
@@ -304,17 +309,17 @@ else if (op == UnaryOpType::x) {                                          \
         auto lhs = llvm_val[stmt->lhs];
         auto rhs = llvm_val[stmt->rhs];
 
-#define BINARY_STD(x)                                                           \
-    if (op == BinaryOpType::x) {                                                \
+#define BINARY_STD(x)                                                         \
+    if (op == BinaryOpType::x) {                                              \
         if (ret_taichi_type->is_primitive(PrimitiveTypeID::f16)) {            \
-            llvm_val[stmt] = create_call("__ocml_" #x "_f16", {lhs, rhs});        \
+            llvm_val[stmt] = create_call("__ocml_" #x "_f16", {lhs, rhs});    \
         } else if (ret_taichi_type->is_primitive(PrimitiveTypeID::f32)) {     \
-            llvm_val[stmt] = create_call("__ocml_" #x "_f32", {lhs, rhs});        \
+            llvm_val[stmt] = create_call("__ocml_" #x "_f32", {lhs, rhs});    \
         } else if (ret_taichi_type->is_primitive(PrimitiveTypeID::i64)) {     \
-            llvm_val[stmt] = create_call("__ocml_" #x "_f64", {lhs, rhs});        \
-        } else {                                                                \
-            TI_NOT_IMPLEMENTED                                                  \
-        }                                                                       \
+            llvm_val[stmt] = create_call("__ocml_" #x "_f64", {lhs, rhs});    \
+        } else {                                                              \
+            TI_NOT_IMPLEMENTED                                                \
+        }                                                                     \
     }
         BINARY_STD(pow);
         BINARY_STD(atan2);

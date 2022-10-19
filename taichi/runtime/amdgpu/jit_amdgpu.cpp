@@ -13,41 +13,41 @@ std::string load_hsaco(const std::string& filename) {
   return std::string(std::istreambuf_iterator<char>(src_file), (std::istreambuf_iterator<char>()));
 }
 
+std::string get_tmp_dir() {
+  char *env_dir = std::getenv("TI_TMP_DIR");
+  std::string tmp_dir;
+  if (!env_dir || env_dir[0] == '\0') {
+    tmp_dir = "/tmp/";
+  } 
+  else {
+    tmp_dir = env_dir;
+    if (tmp_dir[tmp_dir.size() - 1] != '/') {
+      tmp_dir += '/';
+    }
+  }
+  return tmp_dir;
+}
+
+uint64 get_random_num() {
+  static std::random_device device("/dev/urandom");
+  static std::mt19937_64* rng = new std::mt19937_64(device());
+  return (*rng)();
+}
+
 JITModule *JITSessionAMDGPU ::add_module(std::unique_ptr<llvm::Module> M,
                                        int max_reg) {
-  auto gcn = compile_module_to_gcn(M);
+  auto hsaco = compile_module_to_hsaco(M);
+  TI_TRACE("hsaco size: {:.2f}KB", hsaco.size() / 1024.0);
 
-  static FileSequenceWriter writer("taichi_kernel_gcn_{:04d}.o",
-                                     "module AMDGCN");
-  writer.write(gcn);
-
-  auto filename = writer.get_filename();
-  auto obj_filename = filename + ".o";
-  auto hsaco_filename = filename + ".hsaco";
-
-  // TODO: figure out why using the guard leads to wrong tests results
-  // auto context_guard = AMDGPUContext::get_instance().get_guard();
-  AMDGPUContext::get_instance().make_current();
-  // Create module for object
   void *amdgpu_module;
-  TI_TRACE("GCN size: {:.2f}KB", gcn.size() / 1024.0);
   auto t = Time::get_time();
-  TI_TRACE("Loading module...");
-  [[maybe_unused]] auto _ = AMDGPUContext::get_instance().get_lock_guard();
-
-  std::string lld_cmd = "ld.lld -shared " + obj_filename + " -o " + hsaco_filename;
-
-  if (std::system(lld_cmd.c_str())) 
-      TI_ERROR(fmt::format("Generate {} Error", hsaco_filename));
-
-  std::string hsaco_str = load_hsaco(hsaco_filename);
-  AMDGPUDriver::get_instance().module_load_data(&amdgpu_module, hsaco_str.c_str());
-  TI_TRACE("AMDGPU module load time : {}ms", (Time::get_time() - t) * 1000);
+  AMDGPUDriver::get_instance().module_load_data(&amdgpu_module, hsaco.c_str());
+  TI_TRACE("AMDGPU load data from module time : {}ms", (Time::get_time() - t) * 1000);
   modules.push_back(std::make_unique<JITModuleAMDGPU>(amdgpu_module));
   return modules.back().get();
 }
 
-std::string JITSessionAMDGPU::compile_module_to_gcn(
+std::string JITSessionAMDGPU::compile_module_to_hsaco(
   // Note: compile_module_to_gcn generates bianry code object actually.
   std::unique_ptr<llvm::Module> &llvm_module) {
   // Part of this function is borrowed from Halide::CodeGen_PTX_Dev.cpp
@@ -88,23 +88,39 @@ std::string JITSessionAMDGPU::compile_module_to_gcn(
 
   machine->Options.MCOptions.AsmVerbose = true;
 
-  llvm::SmallString<0> outstr;
-  llvm::raw_svector_ostream llvm_stream(outstr);
+  auto tmp_dir = get_tmp_dir();
+  uint64 random_num = get_random_num();
 
-  machine->addPassesToEmitFile(module_pass_manager, llvm_stream, nullptr, llvm::CGFT_ObjectFile, true);
+  auto obj_filename = "taichi_amdgcn_" + std::to_string(random_num) + ".o";
+  auto hsaco_filename = "taichi_amdgcn_" + std::to_string(random_num) + ".hsaco";
+  auto obj_path = tmp_dir + obj_filename;
+  auto hsaco_path = tmp_dir + hsaco_filename;
+  std::error_code ec;
+
+  std::unique_ptr<llvm::raw_fd_ostream> obj_fs(
+    new llvm::raw_fd_ostream(obj_path, ec, llvm::sys::fs::OpenFlags(1)));
+  machine->addPassesToEmitFile(module_pass_manager, *obj_fs, nullptr, llvm::CGFT_ObjectFile, true);
   function_pass_manager.doInitialization();
   for (auto func = llvm_module->begin(); func != llvm_module->end(); ++func)
     function_pass_manager.run(*func);
   function_pass_manager.doFinalization();
   module_pass_manager.run(*llvm_module);
 
-  std::string obj_str(outstr.begin(), outstr.end());
+  TI_TRACE("Loading module...");
+  [[maybe_unused]] auto _ = AMDGPUContext::get_instance().get_lock_guard();
+
+  std::string lld_cmd = "ld.lld -shared " + obj_path + " -o " + hsaco_path;
+  if (std::system(lld_cmd.c_str())) 
+      TI_ERROR(fmt::format("Generate {} Error", hsaco_filename));
+
+  std::string hsaco_str = load_hsaco(hsaco_path);
+
   if (this->config_->print_kernel_llvm_ir_optimized) {
     static FileSequenceWriter writer("taichi_kernel_amdgpu_llvm_ir_optimized_{:04d}.ll",
                                      "unoptimized LLVM IR (AMDGPU)");
     writer.write(llvm_module.get());
   }
-  return obj_str;
+  return hsaco_str;
 }
 
 std::unique_ptr<JITSession> create_llvm_jit_session_amdgpu(

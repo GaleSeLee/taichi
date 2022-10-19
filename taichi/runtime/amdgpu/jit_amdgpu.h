@@ -1,4 +1,6 @@
 #include <memory>
+#include <utility>
+#include <random>
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/DynamicLibrary.h"
@@ -103,7 +105,7 @@ class JITSessionAMDGPU : public JITSession {
   }
 
  private:
-  std::string compile_module_to_gcn(std::unique_ptr<llvm::Module> &module);
+  std::string compile_module_to_hsaco(std::unique_ptr<llvm::Module> &module);
 };
 
 #endif
