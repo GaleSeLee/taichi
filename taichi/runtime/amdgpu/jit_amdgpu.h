@@ -1,6 +1,10 @@
 #include <memory>
 #include <utility>
 #include <random>
+// ROCm is only avaliable on linux
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <dirent.h>
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/DynamicLibrary.h"
@@ -40,6 +44,13 @@
 TLANG_NAMESPACE_BEGIN
 
 #if defined(TI_WITH_AMDGPU)
+
+uint64 get_random_num() {
+  static std::random_device device("/dev/urandom");
+  static std::mt19937_64* rng = new std::mt19937_64(device());
+  return (*rng)();
+}
+
 class JITModuleAMDGPU : public JITModule {
  private:
   void *module_;
@@ -86,6 +97,7 @@ class JITModuleAMDGPU : public JITModule {
   bool direct_dispatch() const override {
     return false;
   }
+
 };
 
 class JITSessionAMDGPU : public JITSession {
@@ -102,6 +114,34 @@ class JITSessionAMDGPU : public JITSession {
 
   llvm::DataLayout get_data_layout() override {
     return data_layout;
+  }
+
+  std::string load_hsaco(const std::string& filename) {
+    std::ifstream src_file(filename);
+    if (!src_file.is_open()) {
+        TI_ERROR(fmt::format("Open {} Error", filename));
+    }
+    return std::string(std::istreambuf_iterator<char>(src_file), (std::istreambuf_iterator<char>()));
+  }
+
+  std::string get_tmp_dir() {
+    char *env_dir = std::getenv("TI_TMP_DIR");
+    std::string tmp_dir;
+    if (!env_dir || env_dir[0] == '\0') {
+      tmp_dir = "/tmp/taichi_hsaco/";
+      if (opendir(tmp_dir.c_str()) == NULL) {
+        int err = mkdir(tmp_dir.c_str(), S_IRWXU);
+        if (err)
+          TI_ERROR("Failed to create a folder");
+      }
+    } 
+    else {
+      tmp_dir = env_dir;
+      if (tmp_dir[tmp_dir.size() - 1] != '/') {
+        tmp_dir += '/';
+      }
+    }
+    return tmp_dir;
   }
 
  private:

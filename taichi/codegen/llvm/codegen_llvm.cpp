@@ -14,6 +14,8 @@
 #include "taichi/codegen/llvm/struct_llvm.h"
 #include "taichi/util/file_sequence_writer.h"
 
+#include "taichi/ir/analysis.h"
+#include "taichi/ir/transforms.h"
 TLANG_NAMESPACE_BEGIN
 
 // TODO: sort function definitions to match declaration order in header

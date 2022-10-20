@@ -91,14 +91,45 @@ else if (op == UnaryOpType::x) {                                          \
                 auto sub_ = builder->CreateSub(0, input);
                 auto lshr_ = builder->CreateLShr(sub_, 31);
                 llvm_val[stmt] = builder->CreateOr(ashr_, lshr_);
-            } else if (input_taichi_type->is_primitive(PrimitiveTypeID::f32)) {
-                auto ashr_ = builder->CreateAShr(input, 31);
-                auto sub_ = builder->CreateSub(0, input);
-                auto lshr_ = builder->CreateLShr(sub_, 31);
-                llvm_val[stmt] = builder->CreateOr(ashr_, lshr_);
             }
-            else {
-                TI_NOT_IMPLEMENTED
+            else if (input_taichi_type->is_primitive(PrimitiveTypeID::f32)) {
+                auto func_ = builder->GetInsertBlock()->getParent();
+                auto then_0_ = BasicBlock::Create(*llvm_context, "then_0", func_);
+                auto else_0_ = BasicBlock::Create(*llvm_context, "else_0");
+                auto merge_ = BasicBlock::Create(*llvm_context, "merge");
+                auto then_1_ = BasicBlock::Create(*llvm_context, "then_1", func_);
+                auto else_1_ = BasicBlock::Create(*llvm_context, "else_1");
+                auto alloc_ = builder->CreateAlloca(llvm::Type::getFloatTy(*llvm_context), (unsigned)5); 
+                auto newty_ = llvm::PointerType::get(llvm::Type::getFloatTy(*llvm_context), (unsigned)0);
+                auto cast_ = builder->CreateAddrSpaceCast(alloc_, newty_);
+                auto fcmp_oeq_ = builder->CreateFCmpOEQ(input, llvm::ConstantFP::get(llvm::Type::getFloatTy(*llvm_context), 0));
+                builder->CreateCondBr(fcmp_oeq_, then_0_, else_0_);
+                builder->SetInsertPoint(then_0_);
+                builder->CreateStore(llvm::ConstantFP::get(llvm::Type::getFloatTy(*llvm_context), 0), cast_);
+                builder->CreateBr(merge_);
+                then_0_ = builder->GetInsertBlock();
+
+                func_->getBasicBlockList().push_back(else_0_);
+                builder->SetInsertPoint(else_0_);
+                auto fcmp_olt_ = builder->CreateFCmpOLT(input, llvm::ConstantFP::get(llvm::Type::getFloatTy(*llvm_context), 0));
+                builder->CreateCondBr(fcmp_olt_, then_1_, else_1_);
+                else_0_ = builder->GetInsertBlock();
+
+                builder->SetInsertPoint(then_1_);
+                builder->CreateStore(llvm::ConstantFP::get(llvm::Type::getFloatTy(*llvm_context), -1), cast_);
+                builder->CreateBr(merge_);
+                then_1_ = builder->GetInsertBlock();
+
+                func_->getBasicBlockList().push_back(else_1_);
+                builder->SetInsertPoint(else_1_);
+                builder->CreateStore(llvm::ConstantFP::get(llvm::Type::getFloatTy(*llvm_context), 1), cast_);
+                builder->CreateBr(merge_);
+                else_1_ = builder->GetInsertBlock();
+
+                func_->getBasicBlockList().push_back(merge_);
+                builder->SetInsertPoint(merge_);
+                //llvm_val[stmt]= Builder->CreatePHI(Type::getInt8Ty(*TheContext), 3, "iftmp");
+                llvm_val[stmt]= builder->CreateLoad(llvm::Type::getFloatTy(*llvm_context), cast_);
             }
         }
         UNARY_STD(cos)
