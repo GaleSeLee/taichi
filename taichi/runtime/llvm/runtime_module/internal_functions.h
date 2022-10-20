@@ -20,10 +20,16 @@
     data_base_ptr[triplet_id * 3 + 2] = taichi_union_cast<T>(value); \
   } while (0);
 
+#ifdef ARCH_amdgpu
+__host__ __device__
+#endif
 i32 do_nothing(RuntimeContext *context) {
   return 0;
 }
 
+#ifdef ARCH_amdgpu
+__host__ __device__
+#endif
 i32 refresh_counter(RuntimeContext *context) {
   auto runtime = context->runtime;
   auto queue = runtime->mem_req_queue;
@@ -31,6 +37,9 @@ i32 refresh_counter(RuntimeContext *context) {
   return 0;
 }
 
+#ifdef ARCH_amdgpu
+__host__ __device__
+#endif
 i32 insert_triplet_f32(RuntimeContext *context,
                        int64 base_ptr_,
                        int i,
@@ -40,6 +49,9 @@ i32 insert_triplet_f32(RuntimeContext *context,
   return 0;
 }
 
+#ifdef ARCH_amdgpu
+__host__ __device__
+#endif
 i32 insert_triplet_f64(RuntimeContext *context,
                        int64 base_ptr_,
                        int i,
@@ -65,6 +77,9 @@ i32 test_stack(RuntimeContext *context) {
   return 0;
 }
 
+#ifdef ARCH_amdgpu
+__host__ __device__
+#endif
 i32 test_list_manager(RuntimeContext *context) {
   auto runtime = context->runtime;
   taichi_printf(runtime, "LLVMRuntime %p\n", runtime);
@@ -80,6 +95,9 @@ i32 test_list_manager(RuntimeContext *context) {
   return 0;
 }
 
+#ifdef ARCH_amdgpu
+__host__ __device__
+#endif
 i32 test_node_allocator(RuntimeContext *context) {
   auto runtime = context->runtime;
   taichi_printf(runtime, "LLVMRuntime %p\n", runtime);
@@ -113,6 +131,9 @@ i32 test_node_allocator(RuntimeContext *context) {
   return 0;
 }
 
+#ifdef ARCH_amdgpu
+__host__ __device__
+#endif
 i32 test_node_allocator_gc_cpu(RuntimeContext *context) {
   auto runtime = context->runtime;
   taichi_printf(runtime, "LLVMRuntime %p\n", runtime);

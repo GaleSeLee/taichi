@@ -149,6 +149,9 @@ T ifloordiv(T a, T b) {
 
 struct LLVMRuntime;
 template <typename... Args>
+#ifdef ARCH_amdgpu
+__host__ __device__
+#endif
 void taichi_printf(LLVMRuntime *runtime, const char *format, Args &&...args);
 
 extern "C" {
@@ -815,7 +818,7 @@ __host__ __device__
       for (int jj = 0; jj < element_size; jj++)
          *((char *)ptr+jj) = 0;
          // TODO
-      //std::memset(ptr, 0, element_size);
+      memset(ptr, 0, element_size);
       free_list->push_back(idx);
     }
     recycled_list->clear();
@@ -1927,12 +1930,16 @@ __host__ __device__
   return get_element_ptr(i);
 }
 
+#ifdef ARCH_amdgpu
 __host__ __device__
+#endif
 void node_gc(LLVMRuntime *runtime, int snode_id) {
   runtime->node_allocators[snode_id]->gc_serial();
 }
 
-__host__ __device__ 
+#ifdef ARCH_amdgpu
+__host__ __device__
+#endif
 void gc_parallel_0(RuntimeContext *context, int snode_id) {
   LLVMRuntime *runtime = context->runtime;
   auto allocator = runtime->node_allocators[snode_id];
@@ -2091,8 +2098,12 @@ struct printf_helper {
 };
 
 template <typename... Args>
+#ifdef ARCH_amdgpu
+__host__ __device__
+#endif
 void taichi_printf(LLVMRuntime *runtime, const char *format, Args &&...args) {
 #if ARCH_amdgpu
+// TODO
 #else
   runtime->host_printf(format, args...);
 #endif
@@ -2102,29 +2113,44 @@ void taichi_printf(LLVMRuntime *runtime, const char *format, Args &&...args) {
 
 extern "C" {  // local stack operations
 
+#ifdef ARCH_amdgpu
+__host__ __device__
+#endif
 Ptr stack_top_primal(Ptr stack, std::size_t element_size) {
   auto n = *(u64 *)stack;
   return stack + sizeof(u64) + (n - 1) * 2 * element_size;
 }
 
+#ifdef ARCH_amdgpu
+__host__ __device__
+#endif
 Ptr stack_top_adjoint(Ptr stack, std::size_t element_size) {
   return stack_top_primal(stack, element_size) + element_size;
 }
 
+#ifdef ARCH_amdgpu
+__host__ __device__
+#endif
 void stack_init(Ptr stack) {
   *(u64 *)stack = 0;
 }
 
+#ifdef ARCH_amdgpu
+__host__ __device__
+#endif
 void stack_pop(Ptr stack) {
   auto &n = *(u64 *)stack;
   n--;
 }
 
+#ifdef ARCH_amdgpu
+__host__ __device__
+#endif
 void stack_push(Ptr stack, size_t max_num_elements, std::size_t element_size) {
   u64 &n = *(u64 *)stack;
   n += 1;
   // TODO: assert n <= max_elements
-  std::memset(stack_top_primal(stack, element_size), 0, element_size * 2);
+  memset(stack_top_primal(stack, element_size), 0, element_size * 2);
 }
 
 #include "internal_functions.h"
