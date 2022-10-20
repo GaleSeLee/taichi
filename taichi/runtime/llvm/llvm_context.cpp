@@ -551,8 +551,18 @@ void TaichiLLVMContext::link_module_with_amdgpu_libdevice(
     std::unique_ptr<llvm::Module> &module) {
   TI_ASSERT(arch_ == Arch::amdgpu);
   std::string libdevice_paths[] = {
+    "oclc_daz_opt_on",
     "ocml",
-    "oclc_wavefrontsize64_off"
+    "oclc_wavefrontsize64_off",
+    "ockl",
+    "oclc_correctly_rounded_sqrt_off",
+    "oclc_correctly_rounded_sqrt_on",
+    "oclc_daz_opt_off",
+    "oclc_finite_only_off",
+    "oclc_finite_only_on",
+    "oclc_isa_version_1030",  
+    "oclc_unsafe_math_off",
+    "oclc_unsafe_math_on"
   };
   for (auto &libdevice : libdevice_paths) {
     std::string bc_path = "/opt/rocm/amdgcn/bitcode/";

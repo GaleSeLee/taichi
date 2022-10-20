@@ -356,21 +356,32 @@ else if (op == UnaryOpType::x) {                                          \
         auto lhs = llvm_val[stmt->lhs];
         auto rhs = llvm_val[stmt->rhs];
 
-#define BINARY_STD(x)                                                         \
-    if (op == BinaryOpType::x) {                                              \
-        if (ret_taichi_type->is_primitive(PrimitiveTypeID::f16)) {            \
-            llvm_val[stmt] = create_call("__ocml_" #x "_f16", {lhs, rhs});    \
-        } else if (ret_taichi_type->is_primitive(PrimitiveTypeID::f32)) {     \
-            llvm_val[stmt] = create_call("__ocml_" #x "_f32", {lhs, rhs});    \
-        } else if (ret_taichi_type->is_primitive(PrimitiveTypeID::i64)) {     \
-            llvm_val[stmt] = create_call("__ocml_" #x "_f64", {lhs, rhs});    \
-        } else {                                                              \
-            TI_NOT_IMPLEMENTED                                                \
-        }                                                                     \
-    }
-        BINARY_STD(pow);
-        BINARY_STD(atan2);
-#undef BINARY_STD
+        if (op == BinaryOpType::pow) {
+            if (ret_taichi_type->is_primitive(PrimitiveTypeID::f16)) {
+                llvm_val[stmt] = create_call("__ocml_pow_f16", {lhs, rhs});
+            } else if (ret_taichi_type->is_primitive(PrimitiveTypeID::f32)) {
+                llvm_val[stmt] = create_call("__ocml_pow_f32", {lhs, rhs});
+            } else if (ret_taichi_type->is_primitive(PrimitiveTypeID::i64)) {
+                llvm_val[stmt] = create_call("__ocml_pow_f64", {lhs, rhs});
+            } else if (ret_taichi_type->is_primitive(PrimitiveTypeID::i32)) {
+                auto sitofp_lhs_ = builder->CreateSIToFP(lhs, llvm::Type::getDoubleTy(*llvm_context)); 
+                auto sitofp_rhs_ = builder->CreateSIToFP(rhs, llvm::Type::getDoubleTy(*llvm_context)); 
+                auto ret_ = create_call("__ocml_pow_f64", {sitofp_lhs_, sitofp_rhs_});
+                llvm_val[stmt] = builder->CreateFPToSI(ret_, llvm::Type::getInt32Ty(*llvm_context));
+            } else {
+                TI_NOT_IMPLEMENTED
+            }                                                                    
+        } else if (op == BinaryOpType::atan2) {
+            if (ret_taichi_type->is_primitive(PrimitiveTypeID::f16)) {
+                llvm_val[stmt] = create_call("__ocml_atan2_f16", {lhs, rhs});
+            } else if (ret_taichi_type->is_primitive(PrimitiveTypeID::f32)) {
+                llvm_val[stmt] = create_call("__ocml_atan2_f32", {lhs, rhs});
+            } else if (ret_taichi_type->is_primitive(PrimitiveTypeID::i64)) {
+                llvm_val[stmt] = create_call("__ocml_atan2_f64", {lhs, rhs});
+            } else {
+                TI_NOT_IMPLEMENTED
+            }                                                                    
+        }
     }
 };
 
