@@ -108,6 +108,7 @@ class JITSessionAMDGPU : public JITSession {
                  CompileConfig *config,
                  llvm::DataLayout data_layout)
       : JITSession(tlctx, config), data_layout(data_layout) {
+        random_num_ = get_random_num();
   }
 
   JITModule *add_module(std::unique_ptr<llvm::Module> M, int max_reg) override;
@@ -126,19 +127,24 @@ class JITSessionAMDGPU : public JITSession {
 
   std::string get_tmp_dir() {
     char *env_dir = std::getenv("TI_TMP_DIR");
-    std::string tmp_dir;
-    if (!env_dir || env_dir[0] == '\0') {
-      tmp_dir = "/tmp/taichi_hsaco/";
-      if (opendir(tmp_dir.c_str()) == NULL) {
-        int err = mkdir(tmp_dir.c_str(), S_IRWXU);
-        if (err)
-          TI_ERROR("Failed to create a folder");
-      }
-    } 
-    else {
+    std::string tmp_dir = "/tmp/taichi_hsaco/";
+    if (env_dir) {
       tmp_dir = env_dir;
       if (tmp_dir[tmp_dir.size() - 1] != '/') {
         tmp_dir += '/';
+      }
+    }
+    if (opendir(tmp_dir.c_str()) == NULL) {
+      int err = mkdir(tmp_dir.c_str(), S_IRWXU);
+      if (err) {
+        TI_ERROR("Failed to create a folder");
+      }
+    }
+    tmp_dir += std::to_string(random_num_) + "/";
+    if (opendir(tmp_dir.c_str()) == NULL) {
+      int err = mkdir(tmp_dir.c_str(), S_IRWXU);
+      if (err) {
+        TI_ERROR("Failed to create a folder");
       }
     }
     return tmp_dir;
@@ -146,6 +152,7 @@ class JITSessionAMDGPU : public JITSession {
 
  private:
   std::string compile_module_to_hsaco(std::unique_ptr<llvm::Module> &module);
+  uint64_t random_num_;
 };
 
 #endif
