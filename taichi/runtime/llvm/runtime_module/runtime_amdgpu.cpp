@@ -171,6 +171,11 @@ __host__ __device__
 void system_memfence() {
 }
 
+#ifdef ARCH_amdgpu
+__host__ __device__
+void amdgpu_vprintf(Ptr format, Ptr arg);
+#endif
+
 // Note that strlen is undefined on the CUDA backend, so we manually
 // implement it here.
 #ifdef ARCH_amdgpu
@@ -456,6 +461,18 @@ __host__ __device__
 #define TI_ASSERT_INFO(x, msg) taichi_assert(context, (int)(x), msg)
 #define TI_ASSERT(x) TI_ASSERT_INFO(x, #x)
 }
+
+/*
+#ifdef ARCH_amdgpu
+__host__ __device__
+#endif
+void ___stubs___() {
+#if ARCH_amdgpu
+  amdgpu_vprintf(nullptr, nullptr);
+  //amdgpu_clock_i64();
+#endif
+}
+*/
 
 #ifdef ARCH_amdgpu
 __host__ __device__
@@ -1667,7 +1684,7 @@ __host__ __device__ void parallel_struct_for(RuntimeContext *context,
   auto list_tail = list->size();
 // TODO check
 #if ARCH_amdgpu
-  int i = block_idx();
+  int i = threadIdx.x;
   // Note: CUDA requires compile-time constant local array sizes.
   // We use "1" here and modify it during codegen to tls_buffer_size.
   alignas(8) char tls_buffer[1];
@@ -1685,7 +1702,7 @@ __host__ __device__ void parallel_struct_for(RuntimeContext *context,
     upper = std::min(upper, e.loop_bounds[1]);
     if (lower < upper)
       task(context, tls_buffer, &list->get<Element>(element_id), lower, upper);
-    i += grid_dim();
+    i += gridDim.x;
   }
 #else
   cpu_block_task_helper_context ctx;
@@ -2072,15 +2089,24 @@ struct printf_helper {
   char buffer[1024];
   int tail;
 
+#ifdef ARCH_amdgpu
+__host__ __device__
+#endif
   printf_helper() {
-    std::memset(buffer, 0, sizeof(buffer));
+    memset(buffer, 0, sizeof(buffer));
     tail = 0;
   }
 
+#ifdef ARCH_amdgpu
+__host__ __device__
+#endif
   void push_back() {
   }
 
   template <typename... Args, typename T>
+#ifdef ARCH_amdgpu
+__host__ __device__
+#endif
   void push_back(T t, Args &&...args) {
     *(T *)&buffer[tail] = t;
     if (tail % sizeof(T) != 0)
@@ -2092,6 +2118,9 @@ struct printf_helper {
     }
   }
 
+#ifdef ARCH_amdgpu
+__host__ __device__
+#endif
   Ptr ptr() {
     return (Ptr) & (buffer[0]);
   }
@@ -2103,6 +2132,9 @@ __host__ __device__
 #endif
 void taichi_printf(LLVMRuntime *runtime, const char *format, Args &&...args) {
 #if ARCH_amdgpu
+  printf_helper helper;
+  helper.push_back(std::forward<Args>(args)...);
+  amdgpu_vprintf((Ptr)format, helper.ptr());
 // TODO
 #else
   runtime->host_printf(format, args...);

@@ -119,6 +119,10 @@ class TI_DLL_EXPORT Program {
 
   ~Program();
 
+  CompileConfig &this_thread_config() {
+    return config;
+  }
+
   struct KernelProfilerQueryResult {
     int counter{0};
     double min{0.0};

@@ -1,6 +1,6 @@
 import taichi as ti
 
-ti.init()
+ti.init(arch=ti.amdgpu)
 
 N = 8
 dt = 1e-5

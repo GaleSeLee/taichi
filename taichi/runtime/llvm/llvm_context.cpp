@@ -500,14 +500,17 @@ std::unique_ptr<llvm::Module> TaichiLLVMContext::module_from_file(
 
   if (arch_ == Arch::amdgpu) {
     module->setTargetTriple("amdgcn-amd-amdhsa");
-#ifdef TI_WITH_AMDGPU
     patch_intrinsic("thread_idx", llvm::Intrinsic::amdgcn_workitem_id_x);
     patch_intrinsic("block_idx", llvm::Intrinsic::amdgcn_workgroup_id_x);
     patch_atomic_add("atomic_add_i32", llvm::AtomicRMWInst::Add);
     patch_atomic_add("atomic_add_i64", llvm::AtomicRMWInst::Add);
     patch_atomic_add("atomic_add_f64", llvm::AtomicRMWInst::FAdd);
     patch_atomic_add("atomic_add_f32", llvm::AtomicRMWInst::FAdd);
-#endif
+    for (auto &f : *module) {
+      if (f.getName() == "amdgpu_vprintf") {
+        f.setName("printf");
+      }
+    }
     link_module_with_amdgpu_libdevice(module);
   }
   return module;
@@ -562,7 +565,10 @@ void TaichiLLVMContext::link_module_with_amdgpu_libdevice(
     "oclc_finite_only_on",
     "oclc_isa_version_1030",  
     "oclc_unsafe_math_off",
-    "oclc_unsafe_math_on"
+    "oclc_unsafe_math_on",
+    "asanrtl",
+    "hip",
+    "opencl"
   };
   for (auto &libdevice : libdevice_paths) {
     std::string bc_path = "/opt/rocm/amdgcn/bitcode/";
@@ -1052,8 +1058,15 @@ void TaichiLLVMContext::add_struct_for_func(llvm::Module *module,
   auto new_type = llvm::ArrayType::get(char_type, tls_size);
   {
     llvm::IRBuilder<> builder(alloca);
+#ifdef TI_WITH_AMDGPU
+    auto *new_alloca_tmp = builder.CreateAlloca(new_type, (unsigned)5);
+    new_alloca_tmp->setAlignment(Align(8));
+    auto new_ty = llvm::PointerType::get(new_type, unsigned(0));
+    auto *new_alloca = builder.CreateAddrSpaceCast(new_alloca_tmp, new_ty);
+#else
     auto *new_alloca = builder.CreateAlloca(new_type);
     new_alloca->setAlignment(Align(8));
+#endif
     TI_ASSERT(alloca->hasOneUse());
     auto *gep = llvm::cast<llvm::GetElementPtrInst>(alloca->user_back());
     TI_ASSERT(gep->getPointerOperand() == alloca);

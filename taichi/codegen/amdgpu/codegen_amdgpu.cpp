@@ -18,6 +18,7 @@
 #include "taichi/analysis/offline_cache_util.h"
 #include "taichi/ir/analysis.h"
 #include "taichi/ir/transforms.h"
+#include "taichi/codegen/codegen_utils.h"
 
 TLANG_NAMESPACE_BEGIN
 
@@ -29,21 +30,122 @@ public:
     TaskCodeGenAMDGPU(Kernel *kernel, IRNode *ir = nullptr)
         : TaskCodeGenLLVM(kernel, ir) {}
 
-    llvm::Value *create_print(std::string tag,
-                                DataType dt,
-                                llvm::Value *value) override {
-        TI_NOT_IMPLEMENTED
+  llvm::Value *create_print(std::string tag,
+                            DataType dt,
+                            llvm::Value *value) override {
+    std::string format = data_type_format(dt);
+    if (value->getType() == llvm::Type::getFloatTy(*llvm_context)) {
+      value =
+          builder->CreateFPExt(value, llvm::Type::getDoubleTy(*llvm_context));
+    }
+    return create_print("[cuda codegen debug] " + tag + " " + format + "\n",
+                        {value->getType()}, {value});
+  }
+
+  llvm::Value *create_print(const std::string &format,
+                            const std::vector<llvm::Type *> &types,
+                            const std::vector<llvm::Value *> &values) {
+    auto stype = llvm::StructType::get(*llvm_context, types, false);
+    auto value_arr_tmp = builder->CreateAlloca(stype, (unsigned)5);
+    auto NewTy = llvm::PointerType::get(stype, unsigned(0));
+    auto value_arr = builder->CreateAddrSpaceCast(value_arr_tmp, NewTy);
+    for (int i = 0; i < values.size(); i++) {
+      auto value_ptr = builder->CreateGEP(
+#ifdef TI_LLVM_15
+          stype,
+#endif
+          value_arr, {tlctx->get_constant(0), tlctx->get_constant(i)});
+      builder->CreateStore(values[i], value_ptr);
+    }
+    //return LLVMModuleBuilder::call(
+    //    builder.get(), "printf",
+    //    builder->CreateGlobalStringPtr(format, "format_string"),
+    //    builder->CreateBitCast(value_arr,
+    //                           llvm::Type::getInt8PtrTy(*llvm_context)));
+    // TODO
+    return builder->CreateAShr(llvm::ConstantFP::get(llvm::Type::getInt32Ty(*llvm_context), 0), 1);
+  }
+
+  std::tuple<llvm::Value *, llvm::Type *> create_value_and_type(
+      llvm::Value *value,
+      DataType dt) {
+    auto value_type = tlctx->get_data_type(dt);
+    if (dt->is_primitive(PrimitiveTypeID::f32) ||
+        dt->is_primitive(PrimitiveTypeID::f16)) {
+      value_type = tlctx->get_data_type(PrimitiveType::f64);
+      value = builder->CreateFPExt(value, value_type);
+    }
+    if (dt->is_primitive(PrimitiveTypeID::i8)) {
+      value_type = tlctx->get_data_type(PrimitiveType::i16);
+      value = builder->CreateSExt(value, value_type);
+    }
+    if (dt->is_primitive(PrimitiveTypeID::u8)) {
+      value_type = tlctx->get_data_type(PrimitiveType::u16);
+      value = builder->CreateZExt(value, value_type);
+    }
+    return std::make_tuple(value, value_type);
+  }
+
+  void visit(PrintStmt *stmt) override {
+    TI_ASSERT_INFO(stmt->contents.size() < 32,
+                   "CUDA `print()` doesn't support more than 32 entries");
+
+    std::vector<llvm::Type *> types;
+    std::vector<llvm::Value *> values;
+
+    std::string formats;
+    size_t num_contents = 0;
+    for (auto const &content : stmt->contents) {
+      if (std::holds_alternative<Stmt *>(content)) {
+        auto arg_stmt = std::get<Stmt *>(content);
+
+        formats += data_type_format(arg_stmt->ret_type);
+
+        auto value = llvm_val[arg_stmt];
+        auto value_type = value->getType();
+        if (arg_stmt->ret_type->is<TensorType>()) {
+          auto dtype = arg_stmt->ret_type->cast<TensorType>();
+          num_contents += dtype->get_num_elements();
+          auto elem_type = dtype->get_element_type();
+          for (int i = 0; i < dtype->get_num_elements(); ++i) {
+            llvm::Value *elem_value;
+            if (codegen_vector_type(&prog->this_thread_config())) {
+              TI_ASSERT(llvm::dyn_cast<llvm::VectorType>(value_type));
+              elem_value = builder->CreateExtractElement(value, i);
+            } else {
+              TI_ASSERT(llvm::dyn_cast<llvm::ArrayType>(value_type));
+              elem_value = builder->CreateExtractValue(value, i);
+            }
+            auto [casted_value, elem_value_type] =
+                create_value_and_type(elem_value, elem_type);
+            types.push_back(elem_value_type);
+            values.push_back(casted_value);
+          }
+        } else {
+          num_contents++;
+          auto [val, dtype] = create_value_and_type(value, arg_stmt->ret_type);
+          types.push_back(dtype);
+          values.push_back(val);
+        }
+      } else {
+        num_contents += 1;
+        auto arg_str = std::get<std::string>(content);
+
+        auto value = builder->CreateGlobalStringPtr(arg_str, "content_string");
+        auto char_type =
+            llvm::Type::getInt8Ty(*tlctx->get_this_thread_context());
+        auto value_type = llvm::PointerType::get(char_type, 0);
+
+        types.push_back(value_type);
+        values.push_back(value);
+        formats += "%s";
+      }
+      TI_ASSERT_INFO(num_contents < 32,
+                     "CUDA `print()` doesn't support more than 32 entries");
     }
 
-    llvm::Value *create_print(const std::string &format,
-                        const std::vector<llvm::Type *> &types,
-                        const std::vector<llvm::Value *> &values) {
-        TI_NOT_IMPLEMENTED
-    }
-
-    void visit(PrintStmt *stmt) override {
-        TI_NOT_IMPLEMENTED
-    }
+    llvm_val[stmt] = create_print(formats, types, values);
+  }
 
     void emit_extra_unary(UnaryOpStmt *stmt) override {
         auto input = llvm_val[stmt->operand];
