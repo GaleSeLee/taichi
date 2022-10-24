@@ -566,9 +566,9 @@ void TaichiLLVMContext::link_module_with_amdgpu_libdevice(
     "oclc_isa_version_1030",  
     "oclc_unsafe_math_off",
     "oclc_unsafe_math_on",
-    "asanrtl",
-    "hip",
-    "opencl"
+    //"asanrtl",
+    //"hip",
+    //"opencl"
   };
   for (auto &libdevice : libdevice_paths) {
     std::string bc_path = "/opt/rocm/amdgcn/bitcode/";

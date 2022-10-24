@@ -1,10 +1,8 @@
 #include <memory>
 #include <utility>
+#include <mutex>
 #include <random>
-// ROCm is only avaliable on linux
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <dirent.h>
+#include <unistd.h>
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/DynamicLibrary.h"
@@ -36,6 +34,7 @@
 #include "taichi/program/program.h"
 #include "taichi/system/timer.h"
 #include "taichi/util/file_sequence_writer.h"
+#include "taichi/util/io.h"
 
 #define TI_RUNTIME_HOST
 #include "taichi/program/context.h"
@@ -134,19 +133,8 @@ class JITSessionAMDGPU : public JITSession {
         tmp_dir += '/';
       }
     }
-    if (opendir(tmp_dir.c_str()) == NULL) {
-      int err = mkdir(tmp_dir.c_str(), S_IRWXU);
-      if (err) {
-        TI_ERROR("Failed to create a folder");
-      }
-    }
     tmp_dir += std::to_string(random_num_) + "/";
-    if (opendir(tmp_dir.c_str()) == NULL) {
-      int err = mkdir(tmp_dir.c_str(), S_IRWXU);
-      if (err) {
-        TI_ERROR("Failed to create a folder");
-      }
-    }
+    create_directories(tmp_dir);
     return tmp_dir;
   }
 

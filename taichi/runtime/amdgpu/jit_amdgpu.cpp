@@ -69,14 +69,18 @@ std::string JITSessionAMDGPU::compile_module_to_hsaco(
   auto hsaco_path = tmp_dir + hsaco_filename;
   std::error_code ec;
 
-  std::unique_ptr<llvm::raw_fd_ostream> obj_fs(
-    new llvm::raw_fd_ostream(obj_path, ec, llvm::sys::fs::OpenFlags(1)));
-  machine->addPassesToEmitFile(module_pass_manager, *obj_fs, nullptr, llvm::CGFT_ObjectFile, true);
+  llvm::SmallString<0> outstr;
+  llvm::raw_svector_ostream llvm_stream(outstr);
+
+  machine->addPassesToEmitFile(module_pass_manager, llvm_stream, nullptr, llvm::CGFT_ObjectFile, true);
   function_pass_manager.doInitialization();
   for (auto func = llvm_module->begin(); func != llvm_module->end(); ++func)
     function_pass_manager.run(*func);
   function_pass_manager.doFinalization();
   module_pass_manager.run(*llvm_module);
+
+  std::string obj_str(outstr.begin(), outstr.end());
+  std::ofstream(obj_path) << obj_str;
 
   TI_TRACE("Loading module...");
   [[maybe_unused]] auto _ = AMDGPUContext::get_instance().get_lock_guard();
@@ -85,6 +89,7 @@ std::string JITSessionAMDGPU::compile_module_to_hsaco(
   if (std::system(lld_cmd.c_str())) 
       TI_ERROR(fmt::format("Generate {} Error", hsaco_filename));
 
+  //sleep(2);
   std::string hsaco_str = load_hsaco(hsaco_path);
 
   if (this->config_->print_kernel_llvm_ir_optimized) {

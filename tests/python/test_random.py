@@ -59,7 +59,7 @@ def test_random_independent_product():
     fill()
     X = x.to_numpy()
     for i in range(4):
-        assert X.mean() == test_utils.approx(1 / 4, rel=1e-2)
+        assert X.mean() == test_utils.approx(1 / 4, rel=2e-2)
 
 
 @test_utils.test()

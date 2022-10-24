@@ -33,30 +33,31 @@ public:
   llvm::Value *create_print(std::string tag,
                             DataType dt,
                             llvm::Value *value) override {
-    std::string format = data_type_format(dt);
-    if (value->getType() == llvm::Type::getFloatTy(*llvm_context)) {
-      value =
-          builder->CreateFPExt(value, llvm::Type::getDoubleTy(*llvm_context));
-    }
-    return create_print("[cuda codegen debug] " + tag + " " + format + "\n",
-                        {value->getType()}, {value});
+    //std::string format = data_type_format(dt);
+    //if (value->getType() == llvm::Type::getFloatTy(*llvm_context)) {
+    //  value =
+    //      builder->CreateFPExt(value, llvm::Type::getDoubleTy(*llvm_context));
+    //}
+    //return create_print("[cuda codegen debug] " + tag + " " + format + "\n",
+    //                    {value->getType()}, {value});
+    return builder->CreateAShr(llvm::ConstantFP::get(llvm::Type::getInt32Ty(*llvm_context), 0), 1);
   }
 
   llvm::Value *create_print(const std::string &format,
                             const std::vector<llvm::Type *> &types,
                             const std::vector<llvm::Value *> &values) {
-    auto stype = llvm::StructType::get(*llvm_context, types, false);
-    auto value_arr_tmp = builder->CreateAlloca(stype, (unsigned)5);
-    auto NewTy = llvm::PointerType::get(stype, unsigned(0));
-    auto value_arr = builder->CreateAddrSpaceCast(value_arr_tmp, NewTy);
-    for (int i = 0; i < values.size(); i++) {
-      auto value_ptr = builder->CreateGEP(
-#ifdef TI_LLVM_15
-          stype,
-#endif
-          value_arr, {tlctx->get_constant(0), tlctx->get_constant(i)});
-      builder->CreateStore(values[i], value_ptr);
-    }
+    //auto stype = llvm::StructType::get(*llvm_context, types, false);
+    //auto value_arr_tmp = builder->CreateAlloca(stype, (unsigned)5);
+    //auto NewTy = llvm::PointerType::get(stype, unsigned(0));
+    //auto value_arr = builder->CreateAddrSpaceCast(value_arr_tmp, NewTy);
+    //for (int i = 0; i < values.size(); i++) {
+    //  auto value_ptr = builder->CreateGEP(
+//#ifdef TI_LLVM_15
+//          stype,
+//#endif
+//          value_arr, {tlctx->get_constant(0), tlctx->get_constant(i)});
+//      builder->CreateStore(values[i], value_ptr);
+//    }
     //return LLVMModuleBuilder::call(
     //    builder.get(), "printf",
     //    builder->CreateGlobalStringPtr(format, "format_string"),
@@ -143,7 +144,7 @@ public:
       TI_ASSERT_INFO(num_contents < 32,
                      "CUDA `print()` doesn't support more than 32 entries");
     }
-
+    return ;
     llvm_val[stmt] = create_print(formats, types, values);
   }
 

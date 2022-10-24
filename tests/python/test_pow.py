@@ -65,7 +65,7 @@ def _ipow_negative_exp(dt):
 
 @test_utils.test(debug=True,
                  advanced_optimization=False,
-                 exclude=[ti.vulkan, ti.opengl, ti.cc])
+                 exclude=[ti.vulkan, ti.opengl, ti.cc, ti.amdgpu])
 def test_ipow_negative_exp_i32():
     _ipow_negative_exp(ti.i32)
 
@@ -73,6 +73,6 @@ def test_ipow_negative_exp_i32():
 @test_utils.test(debug=True,
                  advanced_optimization=False,
                  require=ti.extension.data64,
-                 exclude=[ti.vulkan, ti.opengl, ti.cc])
+                 exclude=[ti.vulkan, ti.opengl, ti.cc, ti.amdgpu])
 def test_ipow_negative_exp_i64():
     _ipow_negative_exp(ti.i64)
