@@ -2,7 +2,7 @@ import math
 
 import taichi as ti
 
-ti.init(arch=[ti.cuda, ti.metal, ti.amdgpu])
+ti.init(arch=[ti.cpu, ti.cuda, ti.metal, ti.amdgpu])
 
 dim = 3
 N = 1024 * 8

@@ -934,7 +934,7 @@ __host__ __device__
 #ifdef ARCH_amdgpu
   // ref
   // https://rocmdocs.amd.com/en/latest/GCN_ISA_Manuals/testdocbook.html#testdocbook
-  asm("S_ENDPGM");
+  //asm("S_ENDPGM");
 #else
   // TODO: properly kill this CPU thread here, considering the containing
   // ThreadPool structure.
@@ -989,7 +989,7 @@ __host__ __device__
 
   if (!success) {
     // TODO
-    asm("S_ENDPGM");
+    //asm("S_ENDPGM");
     taichi_assert_runtime(this, success, "Out of pre-allocated memory");
   }
   return ret;
@@ -1684,7 +1684,7 @@ __host__ __device__ void parallel_struct_for(RuntimeContext *context,
   auto list_tail = list->size();
 // TODO check
 #if ARCH_amdgpu
-  int i = threadIdx.x;
+  int i = blockIdx.x;
   // Note: CUDA requires compile-time constant local array sizes.
   // We use "1" here and modify it during codegen to tls_buffer_size.
   alignas(8) char tls_buffer[1];

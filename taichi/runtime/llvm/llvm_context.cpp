@@ -1027,7 +1027,11 @@ void TaichiLLVMContext::add_struct_for_func(llvm::Module *module,
   patched_struct_for_func->setName(func_name);
 
   int num_found_alloca = 0;
+#ifdef TI_WITH_AMDGPU
+  llvm::AddrSpaceCastInst *alloca = nullptr;
+#else
   llvm::AllocaInst *alloca = nullptr;
+#endif
 
   auto char_type = llvm::Type::getInt8Ty(llvm_context);
 
@@ -1048,7 +1052,11 @@ void TaichiLLVMContext::add_struct_for_func(llvm::Module *module,
       // Allocated type should be array [1 x i8]
       if (alloca_type->isArrayTy() && alloca_type->getArrayNumElements() == 1 &&
           alloca_type->getArrayElementType() == char_type) {
+#ifdef TI_WITH_AMDGPU
+        alloca = llvm::cast<llvm::AddrSpaceCastInst>(now_alloca->user_back());
+#else
         alloca = now_alloca;
+#endif
         num_found_alloca++;
       }
     }

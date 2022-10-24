@@ -77,7 +77,7 @@ def substep():
 @ti.kernel
 def init():
     for i in range(n_particles):
-        x[i] = [ti.random() * 0.4 + 0.2, ti.random() * 0.4 + 0.2]
+        x[i] = [i % 64 / 64 * 0.4 + 0.2, i / 64 / 64 * 0.4 + 0.05] 
         v[i] = [0, -1]
         J[i] = 1
 

@@ -40,7 +40,7 @@ public:
     //}
     //return create_print("[cuda codegen debug] " + tag + " " + format + "\n",
     //                    {value->getType()}, {value});
-    return builder->CreateAShr(llvm::ConstantFP::get(llvm::Type::getInt32Ty(*llvm_context), 0), 1);
+    return builder->CreateAShr(llvm::ConstantInt::get(llvm::Type::getInt32Ty(*llvm_context), 0), 1);
   }
 
   llvm::Value *create_print(const std::string &format,

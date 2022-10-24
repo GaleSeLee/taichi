@@ -6,6 +6,9 @@
 #include "llvm/Bitcode/BitcodeReader.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Linker/Linker.h"
+#ifdef TI_WITH_AMDGPU
+#include "llvm/IR/IntrinsicsAMDGPU.h"
+#endif //TI_WITH_AMDGPU
 #include "taichi/analysis/offline_cache_util.h"
 #include "taichi/ir/statements.h"
 #include "taichi/runtime/llvm/launch_arg_info.h"
@@ -2020,10 +2023,18 @@ void TaskCodeGenLLVM::create_offload_struct_for(OffloadedStmt *stmt,
     llvm::Value *thread_idx = nullptr, *block_dim = nullptr;
 
     if (spmd) {
+#ifdef TI_WITH_AMDGPU
+      thread_idx = 
+          builder->CreateIntrinsic(llvm::Intrinsic::amdgcn_workitem_id_x, {}, {});
+      auto workgroup_dim_ = create_call("__ockl_get_local_size", llvm::ConstantInt::get(llvm::Type::getInt32Ty(*llvm_context), 0));
+      block_dim = builder->CreateTrunc(workgroup_dim_, llvm::Type::getInt32Ty(*llvm_context));
+      // block_dim = llvm::ConstantInt::get(llvm::Type::getInt32Ty(*llvm_context), 1);
+#else
       thread_idx =
           builder->CreateIntrinsic(Intrinsic::nvvm_read_ptx_sreg_tid_x, {}, {});
       block_dim = builder->CreateIntrinsic(Intrinsic::nvvm_read_ptx_sreg_ntid_x,
                                            {}, {});
+#endif
       builder->CreateStore(builder->CreateAdd(thread_idx, lower_bound),
                            loop_index);
     } else {

@@ -1,0 +1,69 @@
+[Taichi] version 1.1.3, llvm 14.0.0, commit 2ba2e2da, linux, python 3.8.10
+Namespace(arch='amdgpu', cov_append=None, coverage=None, cpp=False, exclusive=False, fail_fast=None, failed_first=None, files=[], help_aot=False, keys=None, marks=None, rerun=None, rerun_with_offline_cache=1, show_output=False, threads='4', timeout=600, verbose=False, with_offline_cache=False)
+Running on Arch=amdgpu
+
+Running Python tests...
+
+Starting 4 testing thread(s)...
+============================= test session starts ==============================
+platform linux -- Python 3.8.10, pytest-7.1.3, pluggy-1.0.0
+rootdir: /home/taichigraphics/zeyuli/pr/taichi, configfile: pyproject.toml
+plugins: rerunfailures-10.2, cov-4.0.0, xdist-2.5.0, forked-1.4.0
+timeout: 600s
+timeout func_only: False
+gw0 I / gw1 I / gw2 I / gw3 I
+gw0 [1753] / gw1 [1753] / gw2 [1753] / gw3 [1753]
+
+..................................ss.ss..s..s......ssssssss.sssssssss... [  4%]
+...s..........sssssss.s.....ssssssss..sss.....ss....s.ssssssss...sssssss [  8%]
+s....s....sss.ss.sss....s...ss.sssssss..s......s.ss.......sssssss....... [ 12%]
+........ss......s.............s........s.s..s..................sssssssss [ 16%]
+......ssss..ssss...s.s.sss.s..s........sssss....s........ss....s...s...s [ 20%]
+....s..s...sssssssss....s.............s...sss..sssssssssssssssssssssssss [ 24%]
+ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss [ 28%]
+ssss.ss..ss..ss..ssssssssssss.......s................ss..s.............. [ 32%]
+.................sss........ssss..sssssssssssssssssss.sss....ssssssssss. [ 36%]
+...sssssssss....sssssssssssssssssssssssssssssssssssssssssssssss......... [ 41%]
+ss....s..s.......sssssssssss.....ss..ssssssssssssss.....ss.............. [ 45%]
+.........s.....s..ssssssssss.....sssssssssss.ssss..ss.......ssssssss.... [ 49%]
+....s....................sssssssssssssssssssssss..ss....s............... [ 53%]
+.................sss......ssss.......sssssssssssssssssssssssssssssssssss [ 57%]
+sssssssssssss................ssss.s..s.sssssssssssss..ssssssssssssssss.. [ 61%]
+.........sssssssssssssssssss.........s.sss.........s..............ssssss [ 65%]
+ssssssssssssssssssssssssssssssssssssss...........s....ss......s..s...... [ 69%]
+sssssssss.....................sssssssss.........s....................... [ 73%]
+...s.sssss.....s....s......sss.sss...s..ssssssssssssssssssssssss........ [ 78%]
+...ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss... [ 82%]
+........................sss.......ss..........sssssssssssssssssssssssss. [ 86%]
+......s....ss...s....ss..............ss....ss................ss.......ss [ 90%]
+sss...............ss...................sssssssssssssssssssss..sssssss... [ 94%]
+ssssssssssss..................s...........ss.....sssss..ss........ssssss [ 98%]
+s.s...s..................                                                [100%]
+=============================== warnings summary ===============================
+tests/python/test_clear_all_gradients.py::test_clear_all_gradients[arch=amdgpu]
+tests/python/test_clear_all_gradients.py::test_clear_all_gradients[arch=amdgpu]
+  /home/taichigraphics/zeyuli/pr/taichi/python/taichi/__init__.py:71: DeprecationWarning: ti.clear_all_gradients is deprecated. Please use ti.ad.clear_all_gradients instead.
+    warnings.warn(
+
+tests/python/test_linalg.py::test_matrix_factories[arch=amdgpu]
+  /home/taichigraphics/zeyuli/pr/taichi/python/taichi/lang/matrix.py:1109: DeprecationWarning: `ti.Matrix.rotation2d(alpha)` is renamed to `ti.Math.rotation2d(ang)`
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+============================= slowest 15 durations =============================
+66.95s call     tests/python/test_ndarray.py::test_ndarray_rw_cache[arch=amdgpu]
+22.74s call     tests/python/examples/rendering/test_cornell_box.py::test_cornell_box[none]
+8.73s call     tests/python/test_linalg.py::test_polar_decomp_f32[arch=amdgpu-3]
+8.57s call     tests/python/examples/simulation/test_ad_gravity.py::test_ad_gravity[none]
+8.10s call     tests/python/test_clear_all_gradients.py::test_clear_all_gradients[arch=amdgpu]
+7.58s call     tests/python/test_linalg.py::test_init_matrix_from_vectors[arch=amdgpu]
+7.45s call     tests/python/test_sort.py::test_sort[arch=amdgpu]
+6.36s call     tests/python/examples/simulation/test_nbody.py::test_nbody[none]
+6.21s call     tests/python/test_mpm88.py::test_mpm88[arch=amdgpu]
+5.99s call     tests/python/test_struct.py::test_2d_nested[arch=amdgpu]
+5.44s call     tests/python/test_matrix_solve.py::test_solve_3x3_f32[arch=amdgpu-9.0]
+5.42s call     tests/python/test_matrix_solve.py::test_solve_3x3_f32[arch=amdgpu-4.0]
+5.42s call     tests/python/test_matrix_solve.py::test_solve_3x3_f32[arch=amdgpu-2.0]
+5.41s call     tests/python/test_matrix_solve.py::test_solve_3x3_f32[arch=amdgpu-5.0]
+5.41s call     tests/python/test_matrix_solve.py::test_solve_3x3_f32[arch=amdgpu-1.0]
+=========== 893 passed, 860 skipped, 3 warnings in 515.83s (0:08:35) ===========
