@@ -1545,8 +1545,8 @@ __host__ __device__
   // All blocks share the only root container, which has only one child
   // container.
   // Each thread processes a subset of the child container for more parallelism.
-  int c_start = block_dim() * block_idx() + thread_idx();
-  int c_step = grid_dim() * block_dim();
+  int c_start = blockIdx.x * blockDim.x + threadIdx.x;
+  int c_step = gridDim.x * blockDim.x;
 #else
   int c_start = 0;
   int c_step = 1;
@@ -1596,11 +1596,11 @@ __host__ __device__
   auto child_from_parent_element = child->from_parent_element;
 #if ARCH_amdgpu
   // Each block processes a slice of a parent container
-  int i_start = block_idx();
-  int i_step = grid_dim();
+  int i_start = blockIdx.x;
+  int i_step = gridDim.x;
   // Each thread processes an element of the parent container
-  int j_start = thread_idx();
-  int j_step = block_dim();
+  int j_start = threadIdx.x;
+  int j_step = blockDim.x;
 #else
   int i_start = 0;
   int i_step = 1;
@@ -1886,7 +1886,7 @@ __host__ __device__ void gpu_parallel_mesh_for(RuntimeContext *context,
                            const std::size_t tls_size) {
   char tls_buffer;
   auto tls_ptr = &tls_buffer;
-  for (int idx = block_idx(); idx < num_patches; idx += gridDim.x) {
+  for (int idx = blockIdx.x; idx < num_patches; idx += gridDim.x) {
     if (prologue)
       prologue(context, tls_ptr, idx);
     func(context, tls_ptr, idx);
@@ -1897,7 +1897,7 @@ __host__ __device__ void gpu_parallel_mesh_for(RuntimeContext *context,
 
 __host__ __device__ i32 linear_thread_idx(RuntimeContext *context) {
 #if ARCH_amdgpu
-  return block_idx() * block_dim() + thread_idx();
+  return blockIdx.x * blockDim.x + threadIdx.x;
 #else
   return context->cpu_thread_id;
 #endif
@@ -1972,7 +1972,7 @@ void gc_parallel_0(RuntimeContext *context, int snode_id) {
     auto items_to_copy = free_list_size - free_list_used;
     while (i < items_to_copy) {
       free_list->get<T>(i) = free_list->get<T>(free_list_used + i);
-      i += grid_dim() * block_dim();
+      i += gridDim.x * blockDim.x;
     }
   } else {
     // Move only non-overlapping parts
@@ -1980,7 +1980,7 @@ void gc_parallel_0(RuntimeContext *context, int snode_id) {
     while (i < items_to_copy) {
       free_list->get<T>(i) =
           free_list->get<T>(free_list_size - items_to_copy + i);
-      i += grid_dim() * block_dim();
+      i += gridDim.x * blockDim.x;
     }
   }
 }
@@ -2010,18 +2010,18 @@ void gc_parallel_2(RuntimeContext *context, int snode_id) {
   auto data_list = allocator->data_list;
   auto element_size = allocator->element_size;
   using T = NodeManager::list_data_type;
-  auto i = block_idx();
+  uint32_t i = blockIdx.x;
   while (i < elements) {
     auto idx = recycled_list->get<T>(i);
     auto ptr = data_list->get_element_ptr(idx);
-    if (thread_idx() == 0) {
+    if (threadIdx.x == 0) {
       free_list->push_back(idx);
     }
     // memset
     auto ptr_stop = ptr + element_size;
     if ((uint64)ptr % 4 != 0) {
       auto new_ptr = ptr + 4 - (uint64)ptr % 4;
-      if (thread_idx() == 0) {
+      if (threadIdx.x == 0) {
         for (uint8 *p = ptr; p < new_ptr; p++) {
           *p = 0;
         }
@@ -2029,16 +2029,16 @@ void gc_parallel_2(RuntimeContext *context, int snode_id) {
       ptr = new_ptr;
     }
     // now ptr is a multiple of 4
-    ptr += thread_idx() * sizeof(uint32);
+    ptr += threadIdx.x * sizeof(uint32);
     while (ptr + sizeof(uint32) <= ptr_stop) {
       *(uint32 *)ptr = 0;
-      ptr += sizeof(uint32) * block_dim();
+      ptr += sizeof(uint32) * blockDim.x;
     }
     while (ptr < ptr_stop) {
       *ptr = 0;
       ptr++;
     }
-    i += grid_dim();
+    i += gridDim.x;
   }
 }
 }
@@ -2064,6 +2064,7 @@ __device__ __host__ u32 rand_u32(RuntimeContext *context) {
                           // it decorrelates streams of PRNGs.
 }
 
+__host__ __device__
 uint64 rand_u64(RuntimeContext *context) {
   return ((u64)rand_u32(context) << 32) + rand_u32(context);
 }
@@ -2072,14 +2073,17 @@ __host__ __device__ f32 rand_f32(RuntimeContext *context) {
   return (rand_u32(context) >> 8) * (1.0f / 16777216.0f);
 }
 
+__host__ __device__
 f64 rand_f64(RuntimeContext *context) {
   return (rand_u64(context) >> 11) * (1.0 / 9007199254740992.0);
 }
 
+__host__ __device__
 i32 rand_i32(RuntimeContext *context) {
   return rand_u32(context);
 }
 
+__host__ __device__
 i64 rand_i64(RuntimeContext *context) {
   return rand_u64(context);
 }
