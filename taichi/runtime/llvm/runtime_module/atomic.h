@@ -2,12 +2,12 @@
 
 // These instructions should be replaced by CUDA intrinsics on GPUs
 #ifdef ARCH_amdgpu
-#include <hip/hip_runtime.h>
+
 #endif
 
 #ifdef ARCH_amdgpu
 #define DEFINE_ATOMIC_EXCHANGE(T)                               \
-  __host__ __device__                                           \
+                                             \
   T atomic_exchange_##T(volatile T *dest, T val) {              \
     T ret;                                                      \
     __atomic_exchange(dest, &val, &ret,                         \
@@ -31,7 +31,7 @@ DEFINE_ATOMIC_EXCHANGE(u64)
 
 #ifdef ARCH_amdgpu
 #define DEFINE_ATOMIC_OP_INTRINSIC(OP, T)                                \
-  __host__ __device__                                                    \
+                                                      \
   T atomic_##OP##_##T(volatile T *dest, T val) {                         \
     return __atomic_fetch_##OP(dest, val,                                \
                                std::memory_order::memory_order_seq_cst); \
@@ -62,7 +62,7 @@ DEFINE_ATOMIC_OP_INTRINSIC(xor, u64)
 
 #ifdef ARCH_amdgpu
 #define DEFINE_ADD(T)                     \
-__host__ __device__ T add_##T(T a, T b) { \
+ T add_##T(T a, T b) { \
     return a + b;                         \
   }
 #else
@@ -74,7 +74,7 @@ __host__ __device__ T add_##T(T a, T b) { \
 
 #ifdef ARCH_amdgpu
 #define DEFINE_MIN(T)                       \
-__host__ __device__ T min_##T(T a, T b) {   \
+ T min_##T(T a, T b) {   \
     return b > a ? a : b;                   \
   }
 #else
@@ -86,7 +86,7 @@ __host__ __device__ T min_##T(T a, T b) {   \
 
 #ifdef ARCH_amdgpu         
 #define DEFINE_MAX(T)                       \
-__host__ __device__ T max_##T(T a, T b) {   \
+ T max_##T(T a, T b) {   \
     return b < a ? a : b;                   \
   }
 #else
@@ -98,7 +98,7 @@ __host__ __device__ T max_##T(T a, T b) {   \
 
 #ifdef ARCH_amdgpu                                                              
 #define DEFINE_ATOMIC_OP_COMP_EXCH(OP, T)                                     \
-__host__ __device__ T atomic_##OP##_##T(volatile T *dest, T inc) {            \
+ T atomic_##OP##_##T(volatile T *dest, T inc) {            \
     T old_val;                                                                \
     T new_val;                                                                \
     do {                                                                      \

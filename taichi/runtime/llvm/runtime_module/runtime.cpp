@@ -48,7 +48,7 @@ using parallel_for_type = void (*)(void *thread_pool,
                                    void *context,
                                    void (*func)(void *, int thread_id, int i));
 
-#if defined(__linux__) && !ARCH_cuda && defined(TI_ARCH_x64)
+#if defined(__linux__) && !ARCH_amdgpu && defined(TI_ARCH_x64)
 __asm__(".symver logf,logf@GLIBC_2.2.5");
 __asm__(".symver powf,powf@GLIBC_2.2.5");
 __asm__(".symver expf,expf@GLIBC_2.2.5");
@@ -114,14 +114,9 @@ using Ptr = uint8 *;
 
 using RuntimeContextArgType = long long;
 
-#if ARCH_cuda
+#if ARCH_amdgpu
 extern "C" {
 
-void __assertfail(const char *message,
-                  const char *file,
-                  i32 line,
-                  const char *function,
-                  std::size_t charSize);
 };
 #endif
 
@@ -174,7 +169,7 @@ i64 cuda_clock_i64() {
 void system_memfence() {
 }
 
-#if ARCH_cuda
+#if ARCH_amdgpu
 void cuda_vprintf(Ptr format, Ptr arg);
 #endif
 
@@ -400,7 +395,7 @@ void taichi_assert_runtime(LLVMRuntime *runtime, i32 test, const char *msg);
 #define TI_ASSERT(x) TI_ASSERT_INFO(x, #x)
 
 void ___stubs___() {
-#if ARCH_cuda
+#if ARCH_amdgpu
   cuda_vprintf(nullptr, nullptr);
   cuda_clock_i64();
 #endif
@@ -775,9 +770,9 @@ void taichi_assert_format(LLVMRuntime *runtime,
       }
     });
   }
-#if ARCH_cuda
+#if ARCH_amdgpu
   // Kill this CUDA thread.
-  asm("exit;");
+  asm("S_ENDPGM");
 #else
   // TODO: properly kill this CPU thread here, considering the containing
   // ThreadPool structure.
@@ -821,16 +816,10 @@ Ptr LLVMRuntime::allocate_from_buffer(std::size_t size, std::size_t alignment) {
     }
   });
   if (!success) {
-#if ARCH_cuda
+#if ARCH_amdgpu
     // Here unfortunately we have to rely on a native CUDA assert failure to
     // halt the whole grid. Using a taichi_assert_runtime will not finish the
     // whole kernel execution immediately.
-    __assertfail(
-        "Out of CUDA pre-allocated memory.\n"
-        "Consider using ti.init(device_memory_fraction=0.9) or "
-        "ti.init(device_memory_GB=4) to allocate more"
-        " GPU memory",
-        "Taichi JIT", 0, "allocate_from_buffer", 1);
 #endif
   }
   taichi_assert_runtime(this, success, "Out of pre-allocated memory");
@@ -856,7 +845,7 @@ Ptr LLVMRuntime::request_allocate_aligned(std::size_t size,
 
     // wait for host to allocate
     while (r->ptr == nullptr) {
-#if defined(ARCH_cuda)
+#if defined(ARCH_amdgpu)
       system_memfence();
 #endif
     };
@@ -1088,7 +1077,7 @@ uint32 cuda_match_any_sync_i32(u32 mask, i32 value) {
 }
 
 u32 cuda_match_all_sync_i32(u32 mask, i32 value) {
-#if ARCH_cuda
+#if ARCH_amdgpu
   u32 ret;
   asm volatile("match.all.sync.b32  %0, %1, %2;"
                : "=r"(ret)
@@ -1100,7 +1089,7 @@ u32 cuda_match_all_sync_i32(u32 mask, i32 value) {
 }
 
 uint32 cuda_match_any_sync_i64(u32 mask, i64 value) {
-#if ARCH_cuda
+#if ARCH_amdgpu
   u32 ret;
   asm volatile("match.any.sync.b64  %0, %1, %2;"
                : "=r"(ret)
@@ -1111,7 +1100,7 @@ uint32 cuda_match_any_sync_i64(u32 mask, i64 value) {
 #endif
 }
 
-#if ARCH_cuda
+#if ARCH_amdgpu
 uint32 cuda_active_mask() {
   unsigned int mask;
   asm volatile("activemask.b32 %0;" : "=r"(mask));
@@ -1225,7 +1214,7 @@ void element_listgen_root(LLVMRuntime *runtime,
   auto parent_lookup_element = parent->lookup_element;
   auto child_get_num_elements = child->get_num_elements;
   auto child_from_parent_element = child->from_parent_element;
-#if ARCH_cuda
+#if ARCH_amdgpu
   // All blocks share the only root container, which has only one child
   // container.
   // Each thread processes a subset of the child container for more parallelism.
@@ -1275,7 +1264,7 @@ void element_listgen_nonroot(LLVMRuntime *runtime,
   auto parent_lookup_element = parent->lookup_element;
   auto child_get_num_elements = child->get_num_elements;
   auto child_from_parent_element = child->from_parent_element;
-#if ARCH_cuda
+#if ARCH_amdgpu
   // Each block processes a slice of a parent container
   int i_start = block_idx();
   int i_step = grid_dim();
@@ -1363,7 +1352,7 @@ void parallel_struct_for(RuntimeContext *context,
                          int num_threads) {
   auto list = (context->runtime)->element_lists[snode_id];
   auto list_tail = list->size();
-#if ARCH_cuda
+#if ARCH_amdgpu
   int i = block_idx();
   // Note: CUDA requires compile-time constant local array sizes.
   // We use "1" here and modify it during codegen to tls_buffer_size.
@@ -1571,7 +1560,7 @@ void gpu_parallel_mesh_for(RuntimeContext *context,
 }
 
 i32 linear_thread_idx(RuntimeContext *context) {
-#if ARCH_cuda
+#if ARCH_amdgpu
   return block_idx() * block_dim() + thread_idx();
 #else
   return context->cpu_thread_id;
@@ -1771,7 +1760,7 @@ struct printf_helper {
 
 template <typename... Args>
 void taichi_printf(LLVMRuntime *runtime, const char *format, Args &&...args) {
-#if ARCH_cuda
+#if ARCH_amdgpu
   printf_helper helper;
   helper.push_back(std::forward<Args>(args)...);
   cuda_vprintf((Ptr)format, helper.ptr());

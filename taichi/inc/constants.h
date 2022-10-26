@@ -33,7 +33,7 @@ constexpr std::size_t default_shared_mem_size = 65536;
 
 template <typename T, typename G>
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
 T taichi_union_cast_with_different_sizes(G g) {
   union {
@@ -46,7 +46,7 @@ T taichi_union_cast_with_different_sizes(G g) {
 
 template <typename T, typename G>
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
 T taichi_union_cast(G g) {
   static_assert(sizeof(T) == sizeof(G));

@@ -21,14 +21,14 @@
   } while (0);
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
 i32 do_nothing(RuntimeContext *context) {
   return 0;
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
 i32 refresh_counter(RuntimeContext *context) {
   auto runtime = context->runtime;
@@ -38,7 +38,7 @@ i32 refresh_counter(RuntimeContext *context) {
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
 i32 insert_triplet_f32(RuntimeContext *context,
                        int64 base_ptr_,
@@ -50,7 +50,7 @@ i32 insert_triplet_f32(RuntimeContext *context,
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
 i32 insert_triplet_f64(RuntimeContext *context,
                        int64 base_ptr_,
@@ -78,7 +78,7 @@ i32 test_stack(RuntimeContext *context) {
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
 i32 test_list_manager(RuntimeContext *context) {
   auto runtime = context->runtime;
@@ -96,7 +96,7 @@ i32 test_list_manager(RuntimeContext *context) {
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
 i32 test_node_allocator(RuntimeContext *context) {
   auto runtime = context->runtime;
@@ -132,7 +132,7 @@ i32 test_node_allocator(RuntimeContext *context) {
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
 i32 test_node_allocator_gc_cpu(RuntimeContext *context) {
   auto runtime = context->runtime;

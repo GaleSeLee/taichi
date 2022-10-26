@@ -210,12 +210,16 @@ std::unique_ptr<llvm::Module> TaichiLLVMContext::clone_module_to_context(
     llvm::WriteBitcodeToFile(*module, sos);
   }
 
+  std::cout << std::endl;
+  std::ofstream("right-bc") << bitcode << std::endl;
+
   auto cloned = parseBitcodeFile(
       llvm::MemoryBufferRef(bitcode, "runtime_bitcode"), *target_context);
   if (!cloned) {
     auto error = cloned.takeError();
     TI_ERROR("Bitcode cloned failed.");
   }
+  exit(1);
   return std::move(cloned.get());
 }
 
@@ -780,6 +784,12 @@ void TaichiLLVMContext::insert_nvvm_annotation(llvm::Function *func,
       ->addOperand(md_node);
 }
 
+void TaichiLLVMContext::mark_function_as_amdgpu_kernel(llvm::Function *func) {
+    func->setCallingConv(llvm::CallingConv::AMDGPU_KERNEL);
+    func->addFnAttr("amdgpu-flat-work-group-size", "1, 256");
+    func->addFnAttr("target-cpu", "gfx1030");
+}
+
 void TaichiLLVMContext::mark_function_as_cuda_kernel(llvm::Function *func,
                                                      int block_dim) {
   // Mark kernel function as a CUDA __global__ function
@@ -912,6 +922,7 @@ void TaichiLLVMContext::update_runtime_jit_module(
       bool is_kernel = false;
       const std::string func_name = f.getName().str();
       if (starts_with(func_name, "runtime_")) {
+        mark_function_as_amdgpu_kernel(&f);
         // compile runtime_amdgpu with clang or hipcc
         // we don't need to mark function as a amdgpu kernel
         is_kernel = true;
@@ -925,7 +936,86 @@ void TaichiLLVMContext::update_runtime_jit_module(
     return starts_with(func_name, "runtime_") ||
            starts_with(func_name, "LLVMRuntime_");
   });
+
+  if (arch_ == Arch::amdgpu) {
+    std::vector<llvm::Function *> global_func;
+    for (auto &f : *module) {
+      if (f.getCallingConv() == llvm::CallingConv::AMDGPU_KERNEL) {
+        global_func.push_back(&f);
+      }
+    }
+    for (auto &f : global_func) {
+      llvm::FunctionType *FTy = f->getFunctionType();
+      std::vector<llvm::Type*> NFParams;
+      for (auto &arg : f->args()) {
+        if (arg.getType()->getTypeID() == llvm::Type::PointerTyID) {
+          auto new_type = llvm::PointerType::get(arg.getType()->getPointerElementType(), unsigned(1));
+          NFParams.push_back(new_type);
+        }
+        else {
+          NFParams.push_back(arg.getType());
+        }
+      } 
+      auto NFTy = llvm::FunctionType::get(FTy->getReturnType(), NFParams, false);
+      auto NF = llvm::Function::Create(NFTy, f->getLinkage(), f->getAddressSpace());
+      //NF->copyAttributesFrom(f);
+      NF->setCallingConv(llvm::CallingConv::AMDGPU_KERNEL);
+      NF->addFnAttr("amdgpu-flat-work-group-size", "1, 1024");
+      NF->addFnAttr("target-cpu", "gfx1030");
+      NF->addFnAttr("frame-pointer", "all");
+      NF->addFnAttr("no-trapping-math", "true");
+      NF->addFnAttr("stack-protector-buffer-size", "8");
+      NF->addFnAttr("target-features", "+16-bit-insts,+ci-insts,+dl-insts,+dot1-insts,+dot2-insts,+dot5-insts,+dot6-insts,+dot7-insts,+dpp,+flat-address-space,+gfx10-3-insts,+gfx10-insts,+gfx8-insts,+gfx9-insts,+s-memrealtime,+s-memtime-inst");
+      NF->setComdat(f->getComdat());
+      f->getParent()->getFunctionList().insert(f->getIterator(), NF);
+      NF->takeName(f);
+      NF->getBasicBlockList().splice(NF->begin(), f->getBasicBlockList());
+      for (llvm::Function::arg_iterator I = f->arg_begin(), E = f->arg_end(),
+                                  I2 = NF->arg_begin(); I != E; ++I, ++I2) {
+        if (I->getType()->getTypeID() == llvm::Type::PointerTyID) {
+          auto &front_bb = NF->getBasicBlockList().front();
+          llvm::Instruction *addrspacecast = new AddrSpaceCastInst(I2, I->getType());
+          front_bb.getInstList().insertAfter(front_bb.getFirstInsertionPt(), addrspacecast);
+          I->replaceAllUsesWith(addrspacecast);
+          I2->takeName(&*I);
+        } 
+        else {
+          I->replaceAllUsesWith(&*I2);
+          I2->takeName(&*I);
+        }
+      }
+      SmallVector<std::pair<unsigned, MDNode *>, 1> MDs;
+      f->getAllMetadata(MDs);
+      for (auto [KindID, Node] : MDs)
+        NF->addMetadata(KindID, *Node);
+      f->eraseFromParent();
+    }
+
+    for (auto &f : *module) {
+      for (auto &bb: f) {
+        std::vector<llvm::AllocaInst*> alloca_inst_vec;
+        for (llvm::Instruction &inst : bb) {
+            llvm::AllocaInst* now_alloca = llvm::dyn_cast<AllocaInst>(&inst);
+            if (!now_alloca) {
+              continue;
+            }
+            alloca_inst_vec.push_back(now_alloca);
+        }
+        for (auto &allocainst : alloca_inst_vec) {
+            auto alloca_type = allocainst->getAllocatedType();
+            llvm::IRBuilder<> builder(allocainst);
+            auto *new_alloca = builder.CreateAlloca(alloca_type, (unsigned)5);
+            auto new_type = llvm::PointerType::get(alloca_type, (unsigned)0);
+            auto *addrspacecast = builder.CreateAddrSpaceCast(new_alloca, new_type);
+            allocainst->replaceAllUsesWith(addrspacecast);
+            allocainst->eraseFromParent();
+        }
+      }
+    }
+
+  }
   runtime_jit_module = add_module(std::move(module));
+
 }
 
 void TaichiLLVMContext::delete_functions_of_snode_tree(int id) {

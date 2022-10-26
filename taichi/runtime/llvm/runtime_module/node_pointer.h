@@ -8,14 +8,14 @@ struct PointerMeta : public StructMeta {
 STRUCT_FIELD(PointerMeta, _);
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
 i32 Pointer_get_num_elements(Ptr meta, Ptr node) {
   return ((StructMeta *)meta)->max_num_elements;
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
 bool is_representative(uint32 mask, uint64 value) {
 #if defined(ARCH_amdgpu)
@@ -45,7 +45,7 @@ bool is_representative(uint32 mask, uint64 value) {
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
 void Pointer_activate(Ptr meta_, Ptr node, int i) {
   auto meta = (StructMeta *)meta_;
@@ -74,7 +74,7 @@ void Pointer_activate(Ptr meta_, Ptr node, int i) {
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
 void Pointer_deactivate(Ptr meta, Ptr node, int i) {
   auto num_elements = Pointer_get_num_elements(meta, node);
@@ -94,7 +94,7 @@ void Pointer_deactivate(Ptr meta, Ptr node, int i) {
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
 i32 Pointer_is_active(Ptr meta, Ptr node, int i) {
   auto num_elements = Pointer_get_num_elements(meta, node);
@@ -103,7 +103,7 @@ i32 Pointer_is_active(Ptr meta, Ptr node, int i) {
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
 Ptr Pointer_lookup_element(Ptr meta, Ptr node, int i) {
   auto num_elements = Pointer_get_num_elements(meta, node);

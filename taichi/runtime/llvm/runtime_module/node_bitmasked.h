@@ -8,14 +8,14 @@ struct BitmaskedMeta : public StructMeta {
 STRUCT_FIELD(BitmaskedMeta, _);
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
 i32 Bitmasked_get_num_elements(Ptr meta, Ptr node) {
   return ((StructMeta *)meta)->max_num_elements;
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
 void Bitmasked_activate(Ptr meta, Ptr node, int i) {
   auto smeta = (StructMeta *)meta;
@@ -27,7 +27,7 @@ void Bitmasked_activate(Ptr meta, Ptr node, int i) {
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
 void Bitmasked_deactivate(Ptr meta, Ptr node, int i) {
   auto smeta = (StructMeta *)meta;
@@ -39,7 +39,7 @@ void Bitmasked_deactivate(Ptr meta, Ptr node, int i) {
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
 i32 Bitmasked_is_active(Ptr meta, Ptr node, int i) {
   auto smeta = (StructMeta *)meta;
@@ -51,7 +51,7 @@ i32 Bitmasked_is_active(Ptr meta, Ptr node, int i) {
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
 Ptr Bitmasked_lookup_element(Ptr meta, Ptr node, int i) {
   return node + ((StructMeta *)meta)->element_size * i;

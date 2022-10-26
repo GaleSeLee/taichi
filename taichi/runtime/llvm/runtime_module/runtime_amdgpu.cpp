@@ -7,7 +7,7 @@
 #include <type_traits>
 #include <cstring>
 #ifdef ARCH_amdgpu
-#include <hip/hip_runtime.h>
+
 #endif
 
 #include "taichi/inc/constants.h"
@@ -22,7 +22,7 @@ using host_printf_type = void (*)(const char *, ...);
 // Add dummy function to save function type for host_printf_type.
 extern "C" 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
 void get_func_type_host_printf(const char *, ...) {
 }
@@ -42,34 +42,34 @@ using parallel_for_type = void (*)(void *thread_pool,
 
 // For accessing struct fields
 #define STRUCT_FIELD(S, F)                              \
-  extern "C" __host__ __device__ decltype(S::F) S##_get_##F(S *s) {         \
+  extern "C"  decltype(S::F) S##_get_##F(S *s) {         \
     return s->F;                                        \
   }                                                     \
-  extern "C" __host__ __device__ decltype(S::F) *S##_get_ptr_##F(S *s) {    \
+  extern "C"  decltype(S::F) *S##_get_ptr_##F(S *s) {    \
     return &(s->F);                                     \
   }                                                     \
-  extern "C" __host__ __device__ void S##_set_##F(S *s, decltype(S::F) f) { \
+  extern "C"  void S##_set_##F(S *s, decltype(S::F) f) { \
     s->F = f;                                           \
   }
 
 #define STRUCT_FIELD_ARRAY(S, F)                                             \ 
-  extern "C" __host__ __device__ std::remove_all_extents_t<decltype(S::F)>   \ 
+  extern "C"  std::remove_all_extents_t<decltype(S::F)>   \ 
                                  S##_get_##F(S *s, int i) {                  \
     return s->F[i];                                                          \
   }                                                                          \
-  extern "C" __host__ __device__ void S##_set_##F(S *s, int i,               \
+  extern "C"  void S##_set_##F(S *s, int i,               \
                               std::remove_all_extents_t<decltype(S::F)> f) { \
     s->F[i] = f;                                                             \
   };
 
 // For fetching struct fields from device to host
 #define RUNTIME_STRUCT_FIELD(S, F)                                    \
-  extern "C" __host__ __device__ void runtime_##S##_get_##F(LLVMRuntime *runtime, S *s) { \
+  extern "C"  void runtime_##S##_get_##F(LLVMRuntime *runtime, S *s) { \
     runtime->set_result(taichi_result_buffer_runtime_query_id, s->F); \
   }
 
 #define RUNTIME_STRUCT_FIELD_ARRAY(S, F)                                     \
-  extern "C" __host__ __device__ void runtime_##S##_get_##F(LLVMRuntime *runtime, S *s, int i) { \
+  extern "C"  void runtime_##S##_get_##F(LLVMRuntime *runtime, S *s, int i) { \
     runtime->set_result(taichi_result_buffer_runtime_query_id, s->F[i]);     \
   }
 
@@ -113,13 +113,13 @@ void __assertfail(const char *message,
 
 template <typename T>
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
 void locked_task(void *lock, const T &func);
 
 template <typename T, typename G>
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
 void locked_task(void *lock, const T &func, const G &test);
 
@@ -150,7 +150,7 @@ T ifloordiv(T a, T b) {
 struct LLVMRuntime;
 template <typename... Args>
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
 void taichi_printf(LLVMRuntime *runtime, const char *format, Args &&...args);
 
@@ -160,26 +160,26 @@ extern "C" {
 // mark it as force no inline. Helpful when preventing inlining huge function
 // bodies.
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
 void mark_force_no_inline() {
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
 void system_memfence() {
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 void amdgpu_vprintf(Ptr format, Ptr arg);
 #endif
 
 // Note that strlen is undefined on the CUDA backend, so we manually
 // implement it here.
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
 std::size_t taichi_strlen(const char *str) {
   std::size_t len = 0;
@@ -189,10 +189,10 @@ std::size_t taichi_strlen(const char *str) {
 }
 
 #define DEFINE_UNARY_REAL_FUNC(F) \
-  __device__ __host__ f32 F##_f32(f32 x) {            \
+   f32 F##_f32(f32 x) {            \
     return std::F(x);             \
   }                               \
-  __device__ __host__ f64 F##_f64(f64 x) {            \
+   f64 F##_f64(f64 x) {            \
     return std::F(x);             \
   }
 
@@ -223,7 +223,7 @@ DEFINE_FAST_POW(i32)
 DEFINE_FAST_POW(i64)
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
 int abs_i32(int a) {
   if (a > 0) {
@@ -242,98 +242,98 @@ i64 floordiv_i64(i64 a, i64 b) {
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
 u16 min_u16(u16 a, u16 b) {
   return a < b ? a : b;
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  i16 min_i16(i16 a, i16 b) {
   return a < b ? a : b;
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
 u32 min_u32(u32 a, u32 b) {
   return a < b ? a : b;
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  int min_i32(i32 a, i32 b) {
   return a < b ? a : b;
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  u64 min_u64(u64 a, u64 b) {
   return a < b ? a : b;
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  i64 min_i64(i64 a, i64 b) {
   return a < b ? a : b;
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  u16 max_u16(u16 a, u16 b) {
   return a > b ? a : b;
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  i16 max_i16(i16 a, i16 b) {
   return a > b ? a : b;
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  u32 max_u32(u32 a, u32 b) {
   return a > b ? a : b;
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  int max_i32(i32 a, i32 b) {
   return a > b ? a : b;
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  u64 max_u64(u64 a, u64 b) {
   return a > b ? a : b;
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  i64 max_i64(i64 a, i64 b) {
   return a > b ? a : b;
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  int32 logic_not_i32(int32 a) {
   return !a;
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  float32 sgn_f32(float32 a) {
   float32 b;
@@ -347,7 +347,7 @@ __host__ __device__
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  float64 sgn_f64(float64 a) {
   float32 b;
@@ -361,28 +361,28 @@ __host__ __device__
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  f32 atan2_f32(f32 a, f32 b) {
   return std::atan2(a, b);
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  f64 atan2_f64(f64 a, f64 b) {
   return std::atan2(a, b);
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  f32 pow_f32(f32 a, f32 b) {
   return std::pow(a, b);
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  f64 pow_f64(f64 a, f64 b) {
   return std::pow(a, b);
@@ -402,7 +402,7 @@ STRUCT_FIELD(RuntimeContext, runtime);
 STRUCT_FIELD(RuntimeContext, result_buffer)
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
 int32 RuntimeContext_get_extra_args(RuntimeContext *ctx, int32 i, int32 j) {
   return ctx->extra_args[i][j];
@@ -421,15 +421,15 @@ struct StructMeta {
   std::size_t element_size;
   i64 max_num_elements;
 
-  __host__ __device__ Ptr (*lookup_element)(Ptr, Ptr, int i);
+   Ptr (*lookup_element)(Ptr, Ptr, int i);
 
-  __host__ __device__ Ptr (*from_parent_element)(Ptr);
+   Ptr (*from_parent_element)(Ptr);
 
-  __host__ __device__ i32 (*is_active)(Ptr, Ptr, int i);
+   i32 (*is_active)(Ptr, Ptr, int i);
 
-  __host__ __device__ i32 (*get_num_elements)(Ptr, Ptr);
+   i32 (*get_num_elements)(Ptr, Ptr);
 
-  __host__ __device__ void (*refine_coordinates)(PhysicalCoordinates *inp_coord,
+   void (*refine_coordinates)(PhysicalCoordinates *inp_coord,
                              PhysicalCoordinates *refined_coord,
                              int index);
 
@@ -451,11 +451,11 @@ struct LLVMRuntime;
 constexpr bool enable_assert = true;
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  void taichi_assert(RuntimeContext *context, i32 test, const char *msg);
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  void taichi_assert_runtime(LLVMRuntime *runtime, i32 test, const char *msg);
 #define TI_ASSERT_INFO(x, msg) taichi_assert(context, (int)(x), msg)
@@ -464,7 +464,7 @@ __host__ __device__
 
 /*
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
 void ___stubs___() {
 #if ARCH_amdgpu
@@ -475,7 +475,7 @@ void ___stubs___() {
 */
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  bool is_power_of_two(uint32 x) {
   return x != 0 && (x & (x - 1)) == 0;
@@ -499,7 +499,7 @@ struct ListManager {
   LLVMRuntime *runtime;
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
 
   ListManager(LLVMRuntime *runtime,
@@ -516,12 +516,12 @@ __host__ __device__
   }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  void append(void *data_ptr);
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  i32 reserve_new_element() {
     auto i = atomic_add_i32(&num_elements, 1);
@@ -532,24 +532,24 @@ __host__ __device__
 
  template <typename T>
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  void push_back(const T &t) {
     this->append((void *)&t);
   }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  Ptr allocate();
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  void touch_chunk(int chunk_id);
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  i32 get_num_active_chunks() {
     i32 counter = 0;
@@ -560,21 +560,21 @@ __host__ __device__
   }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  void clear() {
     num_elements = 0;
   }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  void resize(i32 n) {
     num_elements = n;
   }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  Ptr get_element_ptr(i32 i) {
     return chunks[i >> log2chunk_num_elements] +
@@ -583,7 +583,7 @@ __host__ __device__
 
 template <typename T>
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  T &get(i32 i) {
     return *(T *)get_element_ptr(i);
@@ -595,14 +595,14 @@ __host__ __device__
   }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  i32 size() {
     return num_elements;
   }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  i32 ptr2index(Ptr ptr) {
     auto chunk_size = max_num_elements_per_chunk * element_size;
@@ -638,7 +638,7 @@ struct RandState {
 };
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  void initialize_rand_state(RandState *state, u32 i) {
   state->x = 123456789 * i * 1000000007;
@@ -676,19 +676,19 @@ struct LLVMRuntime {
   RandState *rand_states;
   MemRequestQueue *mem_req_queue;
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  Ptr allocate(std::size_t size);
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  Ptr allocate_aligned(std::size_t size, std::size_t alignment);
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  Ptr request_allocate_aligned(std::size_t size, std::size_t alignment);
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  Ptr allocate_from_buffer(std::size_t size, std::size_t alignment);
   Ptr profiler;
@@ -711,7 +711,7 @@ __host__ __device__
 
   template <typename T>
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  void set_result(std::size_t i, T t) {
     static_assert(sizeof(T) <= sizeof(uint64));
@@ -721,7 +721,7 @@ __host__ __device__
 
   template <typename T, typename... Args>
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  T *create(Args &&...args) {
     auto ptr = (T *)request_allocate_aligned(sizeof(T), 4096);
@@ -759,7 +759,7 @@ struct NodeManager {
   using list_data_type = i32;
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
   NodeManager(LLVMRuntime *runtime,
               i32 element_size,
@@ -785,7 +785,7 @@ __host__ __device__
   }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
   Ptr allocate() {
     int old_cursor = atomic_add_i32(&free_list_used, 1);
@@ -801,14 +801,14 @@ __host__ __device__
   }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
   i32 locate(Ptr ptr) {
     return data_list->ptr2index(ptr);
   }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  void recycle(Ptr ptr) {
     auto index = locate(ptr);
@@ -816,7 +816,7 @@ __host__ __device__
   }
 
 #ifdef ARCH_amdgpu
-__host__ __device__ 
+ 
 #endif
   void gc_serial() {
     // compact free list
@@ -844,19 +844,19 @@ __host__ __device__
 
 extern "C" {
 
-__host__ __device__ void RuntimeContext_store_result(RuntimeContext *ctx, u64 ret, u32 idx) {
+ void RuntimeContext_store_result(RuntimeContext *ctx, u64 ret, u32 idx) {
   ctx->result_buffer[taichi_result_buffer_ret_value_id + idx] = ret;
 }
 
-__host__ __device__ void LLVMRuntime_profiler_start(LLVMRuntime *runtime, Ptr kernel_name) {
+ void LLVMRuntime_profiler_start(LLVMRuntime *runtime, Ptr kernel_name) {
   runtime->profiler_start(runtime->profiler, kernel_name);
 }
 
-__host__ __device__ void LLVMRuntime_profiler_stop(LLVMRuntime *runtime) {
+ void LLVMRuntime_profiler_stop(LLVMRuntime *runtime) {
   runtime->profiler_stop(runtime->profiler);
 }
 
-__host__ __device__ Ptr get_temporary_pointer(LLVMRuntime *runtime, u64 offset) {
+ Ptr get_temporary_pointer(LLVMRuntime *runtime, u64 offset) {
   return runtime->temporaries + offset;
 }
 
@@ -896,14 +896,14 @@ RUNTIME_STRUCT_FIELD(ListManager, max_num_elements_per_chunk);
 RUNTIME_STRUCT_FIELD(ListManager, element_size);
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  void taichi_assert(RuntimeContext *context, i32 test, const char *msg) {
   taichi_assert_runtime(context->runtime, test, msg);
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  void taichi_assert_format(LLVMRuntime *runtime,
                           i32 test,
@@ -951,14 +951,14 @@ __host__ __device__
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  void taichi_assert_runtime(LLVMRuntime *runtime, i32 test, const char *msg) {
   taichi_assert_format(runtime, test, msg, 0, nullptr);
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  Ptr LLVMRuntime::allocate_aligned(std::size_t size, std::size_t alignment) {
   if (preallocated) {
@@ -968,7 +968,7 @@ __host__ __device__
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  Ptr LLVMRuntime::allocate_from_buffer(std::size_t size, std::size_t alignment) {
   Ptr ret = nullptr;
@@ -996,14 +996,14 @@ __host__ __device__
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  Ptr LLVMRuntime::allocate(std::size_t size) {
   return allocate_aligned(size, 1);
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  Ptr LLVMRuntime::request_allocate_aligned(std::size_t size,
                                           std::size_t alignment) {
@@ -1132,7 +1132,7 @@ void runtime_initialize_snodes(LLVMRuntime *runtime,
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  void LLVMRuntime_initialize_thread_pool(LLVMRuntime *runtime,
                                         void *thread_pool,
@@ -1160,7 +1160,7 @@ void runtime_allocate_ambient(LLVMRuntime *runtime,
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  void mutex_lock_i32(Ptr mutex) {
   while (atomic_exchange_i32((i32 *)mutex, 1) == 1)
@@ -1168,175 +1168,175 @@ __host__ __device__
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  void mutex_unlock_i32(Ptr mutex) {
   atomic_exchange_i32((i32 *)mutex, 0);
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  int32 ctlz_i32(i32 val) {
   return 0;
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  int32 cttz_i32(i32 val) {
   return 0;
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  int32 cuda_compute_capability() {
   return 0;
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  int32 cuda_ballot(bool bit) {
   return 0;
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  i32 cuda_shfl_down_sync_i32(u32 mask, i32 val, i32 delta, int width) {
   return 0;
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  i32 cuda_shfl_down_i32(i32 delta, i32 val, int width) {
   return 0;
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  f32 cuda_shfl_down_sync_f32(u32 mask, f32 val, i32 delta, int width) {
   return 0;
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  f32 cuda_shfl_down_f32(i32 delta, f32 val, int width) {
   return 0;
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  i32 cuda_shfl_xor_sync_i32(u32 mask, i32 val, i32 delta, int width) {
   return 0;
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  i32 cuda_shfl_up_sync_i32(u32 mask, i32 val, i32 delta, int width) {
   return 0;
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  f32 cuda_shfl_up_sync_f32(u32 mask, f32 val, i32 delta, int width) {
   return 0;
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  i32 cuda_shfl_sync_i32(u32 mask, i32 val, i32 delta, int width) {
   return 0;
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  f32 cuda_shfl_sync_f32(u32 mask, f32 val, i32 delta, int width) {
   return 0;
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  bool cuda_all_sync(u32 mask, bool bit) {
   return false;
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  int32 cuda_all_sync_i32(u32 mask, int32 predicate) {
   return (int32)cuda_all_sync(mask, (bool)predicate);
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  bool cuda_any_sync(u32 mask, bool bit) {
   return false;
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  int32 cuda_any_sync_i32(u32 mask, int32 predicate) {
   return (int32)cuda_any_sync(mask, (bool)predicate);
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  bool cuda_uni_sync(u32 mask, bool bit) {
   return false;
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  int32 cuda_uni_sync_i32(u32 mask, int32 predicate) {
   return (int32)cuda_uni_sync(mask, (bool)predicate);
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  int32 cuda_ballot_sync(int32 mask, bool bit) {
   return 0;
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  int32 cuda_ballot_i32(int32 predicate) {
   return cuda_ballot_sync(UINT32_MAX, (bool)predicate);
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  int32 cuda_ballot_sync_i32(u32 mask, int32 predicate) {
   return cuda_ballot_sync(mask, (bool)predicate);
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  uint32 cuda_match_any_sync_i32(u32 mask, i32 value) {
   return 0;
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  u32 cuda_match_all_sync_i32(u32 mask, i32 value) {
 #if ARCH_amdgpu
@@ -1352,7 +1352,7 @@ __host__ __device__
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  uint32 cuda_match_any_sync_i64(u32 mask, i64 value) {
 #if ARCH_amdgpu
@@ -1363,7 +1363,7 @@ __host__ __device__
 }
 
 #if ARCH_amdgpu
-__host__ __device__ uint32 cuda_active_mask() {
+ uint32 cuda_active_mask() {
   return 0;
 }
 #else
@@ -1373,83 +1373,83 @@ uint32 cuda_active_mask() {
 #endif
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  void block_barrier() {
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  void warp_barrier(uint32 mask) {
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  void block_memfence() {
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  void grid_memfence() {
 }
 
 // these trivial functions are needed by the DEFINE_REDUCTION macro
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  i32 op_add_i32(i32 a, i32 b) {
   return a + b;
 }
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  f32 op_add_f32(f32 a, f32 b) {
   return a + b;
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  i32 op_min_i32(i32 a, i32 b) {
   return std::min(a, b);
 }
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  f32 op_min_f32(f32 a, f32 b) {
   return std::min(a, b);
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  i32 op_max_i32(i32 a, i32 b) {
   return std::max(a, b);
 }
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  f32 op_max_f32(f32 a, f32 b) {
   return std::max(a, b);
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  i32 op_and_i32(i32 a, i32 b) {
   return a & b;
 }
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  i32 op_or_i32(i32 a, i32 b) {
   return a | b;
 }
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  i32 op_xor_i32(i32 a, i32 b) {
   return a ^ b;
@@ -1457,13 +1457,13 @@ __host__ __device__
 
 #ifdef ARCH_amdgpu
 #define DEFINE_REDUCTION(op, dtype)                                                      \
-__host__ __device__ dtype warp_reduce_##op##_##dtype(uint32_t mask, dtype val) {         \
+ dtype warp_reduce_##op##_##dtype(uint32_t mask, dtype val) {         \
     for (int offset = 16; offset > 0; offset /= 2)                                       \
       val = op_##op##_##dtype(                                                           \
           val, cuda_shfl_down_sync_##dtype(mask, val, offset, 31));                      \
     return val;                                                                          \
   }                                                                                      \
-__host__ __device__ dtype reduce_##op##_##dtype(dtype *result, dtype val) {              \
+ dtype reduce_##op##_##dtype(dtype *result, dtype val) {              \
     uint32_t mask = cuda_active_mask();                                                  \
     if (mask != 0xFFFFFFFF) {                                                            \
       atomic_##op##_##dtype(result, val);                                                \
@@ -1513,7 +1513,7 @@ DEFINE_REDUCTION(xor, i32);
 // "Element", "component" are different concepts
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  void clear_list(LLVMRuntime *runtime, StructMeta *parent, StructMeta *child) {
   auto child_list = runtime->element_lists[child->snode_id];
@@ -1528,7 +1528,7 @@ __host__ __device__
 // For the root node there is only one container,
 // therefore we use a special kernel for more parallelism.
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  void element_listgen_root(LLVMRuntime *runtime,
                           StructMeta *parent,
@@ -1580,7 +1580,7 @@ __host__ __device__
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  void element_listgen_nonroot(LLVMRuntime *runtime,
                              StructMeta *parent,
@@ -1673,7 +1673,7 @@ void cpu_struct_for_block_helper(void *ctx_, int thread_id, int i) {
   }
 }
 
-__host__ __device__ void parallel_struct_for(RuntimeContext *context,
+ void parallel_struct_for(RuntimeContext *context,
                          int snode_id,
                          int element_size,
                          int element_split,
@@ -1718,8 +1718,8 @@ __host__ __device__ void parallel_struct_for(RuntimeContext *context,
 #endif
 }
 
-using range_for_xlogue = __host__ __device__ void (*)(RuntimeContext *, /*TLS*/ char *tls_base);
-using mesh_for_xlogue = __host__ __device__ void (*)(RuntimeContext *,
+using range_for_xlogue =  void (*)(RuntimeContext *, /*TLS*/ char *tls_base);
+using mesh_for_xlogue =  void (*)(RuntimeContext *,
                                  /*TLS*/ char *tls_base,
                                  uint32_t patch_idx);
 
@@ -1793,7 +1793,7 @@ void cpu_parallel_range_for(RuntimeContext *context,
                         &ctx, cpu_parallel_range_for_task);
 }
 
-__host__ __device__ void gpu_parallel_range_for(RuntimeContext *context,
+ void gpu_parallel_range_for(RuntimeContext *context,
                             int begin,
                             int end,
                             range_for_xlogue prologue,
@@ -1878,7 +1878,7 @@ void cpu_parallel_mesh_for(RuntimeContext *context,
                         &ctx, cpu_parallel_mesh_for_task);
 }
 
-__host__ __device__ void gpu_parallel_mesh_for(RuntimeContext *context,
+ void gpu_parallel_mesh_for(RuntimeContext *context,
                            int num_patches,
                            mesh_for_xlogue prologue,
                            MeshForTaskFunc *func,
@@ -1895,7 +1895,7 @@ __host__ __device__ void gpu_parallel_mesh_for(RuntimeContext *context,
   }
 }
 
-__host__ __device__ i32 linear_thread_idx(RuntimeContext *context) {
+ i32 linear_thread_idx(RuntimeContext *context) {
 #if ARCH_amdgpu
   return blockIdx.x * blockDim.x + threadIdx.x;
 #else
@@ -1910,7 +1910,7 @@ __host__ __device__ i32 linear_thread_idx(RuntimeContext *context) {
 #include "node_bitmasked.h"
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  void ListManager::touch_chunk(int chunk_id) {
   taichi_assert_runtime(runtime, chunk_id < max_num_chunks,
@@ -1929,7 +1929,7 @@ __host__ __device__
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  void ListManager::append(void *data_ptr) {
   auto ptr = allocate();
@@ -1940,7 +1940,7 @@ __host__ __device__
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
  Ptr ListManager::allocate() {
   auto i = reserve_new_element();
@@ -1948,14 +1948,14 @@ __host__ __device__
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
 void node_gc(LLVMRuntime *runtime, int snode_id) {
   runtime->node_allocators[snode_id]->gc_serial();
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
 void gc_parallel_0(RuntimeContext *context, int snode_id) {
   LLVMRuntime *runtime = context->runtime;
@@ -1985,7 +1985,7 @@ void gc_parallel_0(RuntimeContext *context, int snode_id) {
   }
 }
 
-__host__ __device__
+
 void gc_parallel_1(RuntimeContext *context, int snode_id) {
   LLVMRuntime *runtime = context->runtime;
   auto allocator = runtime->node_allocators[snode_id];
@@ -2000,7 +2000,7 @@ void gc_parallel_1(RuntimeContext *context, int snode_id) {
   allocator->recycled_list->clear();
 }
 
-__host__ __device__
+
 void gc_parallel_2(RuntimeContext *context, int snode_id) {
   LLVMRuntime *runtime = context->runtime;
   auto allocator = runtime->node_allocators[snode_id];
@@ -2045,7 +2045,7 @@ void gc_parallel_2(RuntimeContext *context, int snode_id) {
 
 extern "C" {
 
-__device__ __host__ u32 rand_u32(RuntimeContext *context) {
+ u32 rand_u32(RuntimeContext *context) {
   auto state = &((LLVMRuntime *)context->runtime)
                     ->rand_states[linear_thread_idx(context)];
 
@@ -2064,26 +2064,26 @@ __device__ __host__ u32 rand_u32(RuntimeContext *context) {
                           // it decorrelates streams of PRNGs.
 }
 
-__host__ __device__
+
 uint64 rand_u64(RuntimeContext *context) {
   return ((u64)rand_u32(context) << 32) + rand_u32(context);
 }
 
-__host__ __device__ f32 rand_f32(RuntimeContext *context) {
+ f32 rand_f32(RuntimeContext *context) {
   return (rand_u32(context) >> 8) * (1.0f / 16777216.0f);
 }
 
-__host__ __device__
+
 f64 rand_f64(RuntimeContext *context) {
   return (rand_u64(context) >> 11) * (1.0 / 9007199254740992.0);
 }
 
-__host__ __device__
+
 i32 rand_i32(RuntimeContext *context) {
   return rand_u32(context);
 }
 
-__host__ __device__
+
 i64 rand_i64(RuntimeContext *context) {
   return rand_u64(context);
 }
@@ -2094,7 +2094,7 @@ struct printf_helper {
   int tail;
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
   printf_helper() {
     memset(buffer, 0, sizeof(buffer));
@@ -2102,14 +2102,14 @@ __host__ __device__
   }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
   void push_back() {
   }
 
   template <typename... Args, typename T>
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
   void push_back(T t, Args &&...args) {
     *(T *)&buffer[tail] = t;
@@ -2123,7 +2123,7 @@ __host__ __device__
   }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
   Ptr ptr() {
     return (Ptr) & (buffer[0]);
@@ -2132,7 +2132,7 @@ __host__ __device__
 
 template <typename... Args>
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
 void taichi_printf(LLVMRuntime *runtime, const char *format, Args &&...args) {
 #if ARCH_amdgpu
@@ -2150,7 +2150,7 @@ void taichi_printf(LLVMRuntime *runtime, const char *format, Args &&...args) {
 extern "C" {  // local stack operations
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
 Ptr stack_top_primal(Ptr stack, std::size_t element_size) {
   auto n = *(u64 *)stack;
@@ -2158,21 +2158,21 @@ Ptr stack_top_primal(Ptr stack, std::size_t element_size) {
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
 Ptr stack_top_adjoint(Ptr stack, std::size_t element_size) {
   return stack_top_primal(stack, element_size) + element_size;
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
 void stack_init(Ptr stack) {
   *(u64 *)stack = 0;
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
 void stack_pop(Ptr stack) {
   auto &n = *(u64 *)stack;
@@ -2180,7 +2180,7 @@ void stack_pop(Ptr stack) {
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
 void stack_push(Ptr stack, size_t max_num_elements, std::size_t element_size) {
   u64 &n = *(u64 *)stack;
@@ -2198,12 +2198,12 @@ void stack_push(Ptr stack, size_t max_num_elements, std::size_t element_size) {
 // which is an undefined behavior.
 // see #2096 for more details
 #define DEFINE_SET_PARTIAL_BITS(N)                                            \
-  __host__ __device__ void set_mask_b##N(u##N *ptr, u64 mask, u##N value) {                       \
+   void set_mask_b##N(u##N *ptr, u64 mask, u##N value) {                       \
     u##N mask_N = (u##N)mask;                                                 \
     *ptr = (*ptr & (~mask_N)) | (value & mask);                               \
   }                                                                           \
                                                                               \
-  __host__ __device__ void atomic_set_mask_b##N(u##N *ptr, u64 mask, u##N value) {                \
+   void atomic_set_mask_b##N(u##N *ptr, u64 mask, u##N value) {                \
     u##N mask_N = (u##N)mask;                                                 \
     u##N new_value = 0;                                                       \
     u##N old_value = *ptr;                                                    \

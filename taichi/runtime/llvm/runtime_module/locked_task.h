@@ -4,7 +4,7 @@ template <typename T, typename G>
 class lock_guard {
  public:
 #ifdef ARCH_amdgpu
-  __host__ __device__
+  
 #endif
   lock_guard(Ptr lock, const T &func, const G &test) {
 #if ARCH_x64 || ARCH_arm64
@@ -71,11 +71,11 @@ class lock_guard {
 };
 
 #ifdef ARCH_amdgpu
-#include <hip/hip_runtime.h>
+
 #endif
 template <typename T, typename G>
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
 void locked_task(void *lock, const T &func, const G &test) {
   lock_guard<T, G> _((Ptr)lock, func, test);
@@ -83,7 +83,7 @@ void locked_task(void *lock, const T &func, const G &test) {
 
 template <typename T>
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
 void locked_task(void *lock, const T &func) {
   locked_task(lock, func, []() { return true; });

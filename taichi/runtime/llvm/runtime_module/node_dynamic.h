@@ -14,7 +14,7 @@ struct DynamicMeta : public StructMeta {
 STRUCT_FIELD(DynamicMeta, chunk_size);
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
 void Dynamic_activate(Ptr meta_, Ptr node_, int i) {
   auto meta = (DynamicMeta *)(meta_);
@@ -44,7 +44,7 @@ void Dynamic_activate(Ptr meta_, Ptr node_, int i) {
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
 void Dynamic_deactivate(Ptr meta_, Ptr node_) {
   auto meta = (DynamicMeta *)(meta_);
@@ -65,7 +65,7 @@ void Dynamic_deactivate(Ptr meta_, Ptr node_) {
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
 i32 Dynamic_append(Ptr meta_, Ptr node_, i32 data) {
   auto meta = (DynamicMeta *)(meta_);
@@ -96,7 +96,7 @@ i32 Dynamic_append(Ptr meta_, Ptr node_, i32 data) {
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
 i32 Dynamic_is_active(Ptr meta_, Ptr node_, int i) {
   auto node = (DynamicNode *)(node_);
@@ -104,7 +104,7 @@ i32 Dynamic_is_active(Ptr meta_, Ptr node_, int i) {
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
 Ptr Dynamic_lookup_element(Ptr meta_, Ptr node_, int i) {
   auto meta = (DynamicMeta *)(meta_);
@@ -128,7 +128,7 @@ Ptr Dynamic_lookup_element(Ptr meta_, Ptr node_, int i) {
 }
 
 #ifdef ARCH_amdgpu
-__host__ __device__
+
 #endif
 i32 Dynamic_get_num_elements(Ptr meta_, Ptr node_) {
   auto node = (DynamicNode *)(node_);
