@@ -397,6 +397,31 @@ std::unique_ptr<llvm::Module> TaichiLLVMContext::module_from_file(
     TaichiLLVMContext::mark_inline(func);
   };
 
+  auto patch_dim = [&](std::string name,
+                        llvm::Value *lhs) {
+      std::string actual_name;
+      if (name == "block_dim") {
+        actual_name = "__ockl_get_local_size";
+      }
+      else if (name == "grid_dim") {
+        actual_name = "__ockl_get_num_groups";
+      }
+      else return;
+      auto func = module->getFunction(name);
+      auto actual_func = module->getFunction(actual_name);
+      if (!func || !actual_func) {
+        return;
+      }
+      func->deleteBody();
+      auto bb = llvm::BasicBlock::Create(*ctx, "entry", func);
+      IRBuilder<> builder(*ctx);
+      builder.SetInsertPoint(bb);
+      auto dim_ = builder.CreateCall(actual_func->getFunctionType(), actual_func, {lhs});
+      auto ret_ = builder.CreateTrunc(dim_, llvm::Type::getInt32Ty(*ctx));
+      builder.CreateRet(ret_);
+      TaichiLLVMContext::mark_inline(func);
+  };
+
   if (arch_ == Arch::cuda) {
     module->setTargetTriple("nvptx64-nvidia-cuda");
 
@@ -510,12 +535,17 @@ std::unique_ptr<llvm::Module> TaichiLLVMContext::module_from_file(
     patch_atomic_add("atomic_add_i64", llvm::AtomicRMWInst::Add);
     patch_atomic_add("atomic_add_f64", llvm::AtomicRMWInst::FAdd);
     patch_atomic_add("atomic_add_f32", llvm::AtomicRMWInst::FAdd);
+
+    link_module_with_amdgpu_libdevice(module);
+    /*
     for (auto &f : *module) {
       if (f.getName() == "amdgpu_vprintf") {
         f.setName("printf");
       }
     }
-    link_module_with_amdgpu_libdevice(module);
+    */
+    patch_dim("block_dim", llvm::ConstantInt::get(llvm::Type::getInt32Ty(*ctx), 0));
+    patch_dim("grid_dim", llvm::ConstantInt::get(llvm::Type::getInt32Ty(*ctx), 0));
   }
   return module;
 }
@@ -574,11 +604,15 @@ void TaichiLLVMContext::link_module_with_amdgpu_libdevice(
     //"hip",
     //"opencl"
   };
+  module->setDataLayout(llvm::DataLayout(
+      "e-p:64:64-p1:64:64-p2:32:32-p3:32:32-p4:64:64-p5:32:32-p6:32:32-i64:64-v16:16-v24:32-"
+      "v32:32-v48:64-v96:128-v192:256-v256:256-v512:512-v1024:1024-v2048:2048-n32:64-S32-A5-G1-ni:7"));
   for (auto &libdevice : libdevice_paths) {
     std::string bc_path = "/opt/rocm/amdgcn/bitcode/";
     auto libdevice_module = 
         module_from_bitcode_file(bc_path + libdevice + ".bc",
         get_this_thread_context());
+    
     
     std::vector<std::string> libdevice_function_names;
     for (auto &f : *libdevice_module) {
@@ -939,9 +973,13 @@ void TaichiLLVMContext::update_runtime_jit_module(
 
   if (arch_ == Arch::amdgpu) {
     std::vector<llvm::Function *> global_func;
+    std::vector<llvm::Function *> device_func;
     for (auto &f : *module) {
       if (f.getCallingConv() == llvm::CallingConv::AMDGPU_KERNEL) {
         global_func.push_back(&f);
+      }
+      else {
+        device_func.push_back(&f);
       }
     }
     for (auto &f : global_func) {
@@ -990,6 +1028,11 @@ void TaichiLLVMContext::update_runtime_jit_module(
         NF->addMetadata(KindID, *Node);
       f->eraseFromParent();
     }
+    
+    // for (auto &f : device_func) {
+    //   f->addFnAttr("target-cpu","gfx1030");
+    //   f->addFnAttr("target-features","");
+    // }
 
     for (auto &f : *module) {
       for (auto &bb: f) {
@@ -1117,11 +1160,11 @@ void TaichiLLVMContext::add_struct_for_func(llvm::Module *module,
   patched_struct_for_func->setName(func_name);
 
   int num_found_alloca = 0;
-#ifdef TI_WITH_AMDGPU
-  llvm::AddrSpaceCastInst *alloca = nullptr;
-#else
+//#ifdef TI_WITH_AMDGPU
+//  llvm::AddrSpaceCastInst *alloca = nullptr;
+//#else
   llvm::AllocaInst *alloca = nullptr;
-#endif
+//#endif
 
   auto char_type = llvm::Type::getInt8Ty(llvm_context);
 
@@ -1143,7 +1186,8 @@ void TaichiLLVMContext::add_struct_for_func(llvm::Module *module,
       if (alloca_type->isArrayTy() && alloca_type->getArrayNumElements() == 1 &&
           alloca_type->getArrayElementType() == char_type) {
 #ifdef TI_WITH_AMDGPU
-        alloca = llvm::cast<llvm::AddrSpaceCastInst>(now_alloca->user_back());
+      //  alloca = llvm::cast<llvm::AddrSpaceCastInst>(now_alloca->user_back());
+        alloca = now_alloca;
 #else
         alloca = now_alloca;
 #endif

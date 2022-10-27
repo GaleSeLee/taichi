@@ -16,10 +16,10 @@ int block_idx() {
 }
 
 int block_dim() {
-  return 128;
+  return 1;
 }
 
 int grid_dim() {
-  return 2560;
+  return 1;
 }
 }

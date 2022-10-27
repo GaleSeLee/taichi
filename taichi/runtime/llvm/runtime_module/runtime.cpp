@@ -750,29 +750,29 @@ void taichi_assert_format(LLVMRuntime *runtime,
                           const char *format,
                           int num_arguments,
                           uint64 *arguments) {
-  mark_force_no_inline();
+  //mark_force_no_inline();
 
   if (!enable_assert || test != 0)
     return;
   if (!runtime->error_code) {
-    locked_task(&runtime->error_message_lock, [&] {
-      if (!runtime->error_code) {
-        runtime->error_code = 1;  // Assertion failure
+    // locked_task(&runtime->error_message_lock, [&] {
+    //   if (!runtime->error_code) {
+    //     runtime->error_code = 1;  // Assertion failure
 
-        memset(runtime->error_message_template, 0,
-               taichi_error_message_max_length);
-        memcpy(runtime->error_message_template, format,
-               std::min(taichi_strlen(format),
-                        taichi_error_message_max_length - 1));
-        for (int i = 0; i < num_arguments; i++) {
-          runtime->error_message_arguments[i] = arguments[i];
-        }
-      }
-    });
+    //     memset(runtime->error_message_template, 0,
+    //            taichi_error_message_max_length);
+    //     memcpy(runtime->error_message_template, format,
+    //            taichi_strlen(format)<(taichi_error_message_max_length - 1)?
+    //            taichi_strlen(format): taichi_error_message_max_length-1);
+    //     for (int i = 0; i < num_arguments; i++) {
+    //       runtime->error_message_arguments[i] = arguments[i];
+    //     }
+    //   }
+    // });
   }
 #if ARCH_amdgpu
   // Kill this CUDA thread.
-  asm("S_ENDPGM");
+  //asm("S_ENDPGM");
 #else
   // TODO: properly kill this CPU thread here, considering the containing
   // ThreadPool structure.
@@ -1100,7 +1100,7 @@ uint32 cuda_match_any_sync_i64(u32 mask, i64 value) {
 #endif
 }
 
-#if ARCH_amdgpu
+#if ARCH_cuda
 uint32 cuda_active_mask() {
   unsigned int mask;
   asm volatile("activemask.b32 %0;" : "=r"(mask));
@@ -1470,7 +1470,7 @@ void gpu_parallel_range_for(RuntimeContext *context,
                             range_for_xlogue epilogue,
                             const std::size_t tls_size) {
   int idx = thread_idx() + block_dim() * block_idx() + begin;
-  alignas(8) char tls_buffer[tls_size];
+  alignas(8) char tls_buffer[64];
   auto tls_ptr = &tls_buffer[0];
   if (prologue)
     prologue(context, tls_ptr);
@@ -1548,7 +1548,8 @@ void gpu_parallel_mesh_for(RuntimeContext *context,
                            MeshForTaskFunc *func,
                            mesh_for_xlogue epilogue,
                            const std::size_t tls_size) {
-  alignas(8) char tls_buffer[tls_size];
+  alignas(8) char tls_buffer[64];
+  // AMDGPU
   auto tls_ptr = &tls_buffer[0];
   for (int idx = block_idx(); idx < num_patches; idx += grid_dim()) {
     if (prologue)
@@ -1761,9 +1762,9 @@ struct printf_helper {
 template <typename... Args>
 void taichi_printf(LLVMRuntime *runtime, const char *format, Args &&...args) {
 #if ARCH_amdgpu
-  printf_helper helper;
-  helper.push_back(std::forward<Args>(args)...);
-  cuda_vprintf((Ptr)format, helper.ptr());
+  //printf_helper helper;
+  //helper.push_back(std::forward<Args>(args)...);
+  //cuda_vprintf((Ptr)format, helper.ptr());
 #else
   runtime->host_printf(format, args...);
 #endif

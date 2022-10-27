@@ -23,6 +23,16 @@ std::string JITSessionAMDGPU::compile_module_to_hsaco(
   // Note: compile_module_to_gcn generates bianry code object actually.
   std::unique_ptr<llvm::Module> &llvm_module) {
   // Part of this function is borrowed from Halide::CodeGen_PTX_Dev.cpp
+
+  for (auto &f : *llvm_module.get()) {
+    if (f.getCallingConv() != llvm::CallingConv::AMDGPU_KERNEL) {
+      f.addFnAttr("target-cpu","gfx1030");
+      f.addFnAttr("target-features","");
+      f.addFnAttr("frame-pointer","all");
+    }
+  }
+
+
   if (llvm::verifyModule(*llvm_module, &llvm::errs())) {
     llvm_module->print(llvm::errs(), nullptr);
     TI_WARN("Module broken");
