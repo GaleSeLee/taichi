@@ -529,6 +529,34 @@ std::unique_ptr<llvm::Module> TaichiLLVMContext::module_from_file(
 
   if (arch_ == Arch::amdgpu) {
     module->setTargetTriple("amdgcn-amd-amdhsa");
+    for (auto &f : *module) {
+       f.addFnAttr("target-cpu","gfx1030");
+       f.addFnAttr("target-features","");
+      for (auto &bb: f) {
+        std::vector<llvm::AllocaInst*> alloca_inst_vec;
+        for (llvm::Instruction &inst : bb) {
+            llvm::AllocaInst* now_alloca = llvm::dyn_cast<AllocaInst>(&inst);
+            if (!now_alloca || 
+                now_alloca->getType()->getAddressSpace() != (unsigned)0) {
+              continue;
+            }
+            alloca_inst_vec.push_back(now_alloca);
+        }
+        for (auto &allocainst : alloca_inst_vec) {
+            auto alloca_type = allocainst->getAllocatedType();
+            llvm::IRBuilder<> builder(allocainst);
+            auto *new_alloca = builder.CreateAlloca(alloca_type, (unsigned)5);
+            auto new_type = llvm::PointerType::get(alloca_type, (unsigned)0);
+            new_alloca->setAlignment(llvm::Align(allocainst->getAlignment()));
+            auto *addrspacecast = builder.CreateAddrSpaceCast(new_alloca, new_type);
+            //if (addrspacecast->getType() != allocainst->getType()) {
+            //  int a = 1;
+           // }
+            allocainst->replaceAllUsesWith(addrspacecast);
+            allocainst->eraseFromParent();
+        }
+      }
+    }
     patch_intrinsic("thread_idx", llvm::Intrinsic::amdgcn_workitem_id_x);
     patch_intrinsic("block_idx", llvm::Intrinsic::amdgcn_workgroup_id_x);
     patch_atomic_add("atomic_add_i32", llvm::AtomicRMWInst::Add);
@@ -964,14 +992,6 @@ void TaichiLLVMContext::update_runtime_jit_module(
       if (!is_kernel && !f.isDeclaration())
         f.setLinkage(llvm::Function::PrivateLinkage);
     }
-  }
-
-  eliminate_unused_functions(module.get(), [](std::string func_name) {
-    return starts_with(func_name, "runtime_") ||
-           starts_with(func_name, "LLVMRuntime_");
-  });
-
-  if (arch_ == Arch::amdgpu) {
     std::vector<llvm::Function *> global_func;
     std::vector<llvm::Function *> device_func;
     for (auto &f : *module) {
@@ -1029,34 +1049,13 @@ void TaichiLLVMContext::update_runtime_jit_module(
       f->eraseFromParent();
     }
     
-    // for (auto &f : device_func) {
-    //   f->addFnAttr("target-cpu","gfx1030");
-    //   f->addFnAttr("target-features","");
-    // }
-
-    for (auto &f : *module) {
-      for (auto &bb: f) {
-        std::vector<llvm::AllocaInst*> alloca_inst_vec;
-        for (llvm::Instruction &inst : bb) {
-            llvm::AllocaInst* now_alloca = llvm::dyn_cast<AllocaInst>(&inst);
-            if (!now_alloca) {
-              continue;
-            }
-            alloca_inst_vec.push_back(now_alloca);
-        }
-        for (auto &allocainst : alloca_inst_vec) {
-            auto alloca_type = allocainst->getAllocatedType();
-            llvm::IRBuilder<> builder(allocainst);
-            auto *new_alloca = builder.CreateAlloca(alloca_type, (unsigned)5);
-            auto new_type = llvm::PointerType::get(alloca_type, (unsigned)0);
-            auto *addrspacecast = builder.CreateAddrSpaceCast(new_alloca, new_type);
-            allocainst->replaceAllUsesWith(addrspacecast);
-            allocainst->eraseFromParent();
-        }
-      }
-    }
 
   }
+
+  eliminate_unused_functions(module.get(), [](std::string func_name) {
+    return starts_with(func_name, "runtime_") ||
+           starts_with(func_name, "LLVMRuntime_");
+  });
   runtime_jit_module = add_module(std::move(module));
 
 }
@@ -1160,11 +1159,11 @@ void TaichiLLVMContext::add_struct_for_func(llvm::Module *module,
   patched_struct_for_func->setName(func_name);
 
   int num_found_alloca = 0;
-//#ifdef TI_WITH_AMDGPU
-//  llvm::AddrSpaceCastInst *alloca = nullptr;
-//#else
+#ifdef TI_WITH_AMDGPU
+  llvm::AddrSpaceCastInst *alloca = nullptr;
+#else
   llvm::AllocaInst *alloca = nullptr;
-//#endif
+#endif
 
   auto char_type = llvm::Type::getInt8Ty(llvm_context);
 
@@ -1186,8 +1185,8 @@ void TaichiLLVMContext::add_struct_for_func(llvm::Module *module,
       if (alloca_type->isArrayTy() && alloca_type->getArrayNumElements() == 1 &&
           alloca_type->getArrayElementType() == char_type) {
 #ifdef TI_WITH_AMDGPU
-      //  alloca = llvm::cast<llvm::AddrSpaceCastInst>(now_alloca->user_back());
-        alloca = now_alloca;
+        alloca = llvm::cast<llvm::AddrSpaceCastInst>(now_alloca->user_back());
+        //alloca = now_alloca;
 #else
         alloca = now_alloca;
 #endif
