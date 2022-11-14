@@ -43,13 +43,6 @@
 TLANG_NAMESPACE_BEGIN
 
 #if defined(TI_WITH_AMDGPU)
-
-uint64 get_random_num() {
-  static std::random_device device("/dev/urandom");
-  static std::mt19937_64* rng = new std::mt19937_64(device());
-  return (*rng)();
-}
-
 class JITModuleAMDGPU : public JITModule {
  private:
   void *module_;
@@ -59,8 +52,6 @@ class JITModuleAMDGPU : public JITModule {
   }
 
   void *lookup_function(const std::string &name) override {
-    // TODO: figure out why using the guard leads to wrong tests results
-    // auto context_guard = AMDGPUContext::get_instance().get_guard();
     AMDGPUContext::get_instance().make_current();
     void *func = nullptr;
     auto t = Time::get_time();
@@ -108,6 +99,16 @@ class JITSessionAMDGPU : public JITSession {
                  llvm::DataLayout data_layout)
       : JITSession(tlctx, config), data_layout(data_layout) {
         random_num_ = get_random_num();
+                char *env_dir = std::getenv("TI_TMP_DIR");
+        tmp_dir_ = "/tmp/taichi_hsaco/";
+        if (env_dir) {
+          tmp_dir_ = env_dir;
+          if (tmp_dir_[tmp_dir_.size() - 1] != '/') {
+            tmp_dir_ += '/';
+          }
+        }
+        tmp_dir_ += std::to_string(random_num_) + "/";
+        create_directories(tmp_dir_);
   }
 
   JITModule *add_module(std::unique_ptr<llvm::Module> M, int max_reg) override;
@@ -125,22 +126,20 @@ class JITSessionAMDGPU : public JITSession {
   }
 
   std::string get_tmp_dir() {
-    char *env_dir = std::getenv("TI_TMP_DIR");
-    std::string tmp_dir = "/tmp/taichi_hsaco/";
-    if (env_dir) {
-      tmp_dir = env_dir;
-      if (tmp_dir[tmp_dir.size() - 1] != '/') {
-        tmp_dir += '/';
-      }
-    }
-    tmp_dir += std::to_string(random_num_) + "/";
-    create_directories(tmp_dir);
-    return tmp_dir;
+    return tmp_dir_;
   }
+
+uint64 get_random_num() {
+  static std::random_device device("/dev/urandom");
+  static std::mt19937_64* rng = new std::mt19937_64(device());
+  return (*rng)();
+}
+
 
  private:
   std::string compile_module_to_hsaco(std::unique_ptr<llvm::Module> &module);
   uint64_t random_num_;
+  std::string tmp_dir_;
 };
 
 #endif

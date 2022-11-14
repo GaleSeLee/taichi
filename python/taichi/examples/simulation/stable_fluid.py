@@ -37,7 +37,7 @@ if use_sparse_matrix:
     ti.init(arch=ti.x64)
     print('Using sparse matrix')
 else:
-    ti.init(arch=ti.gpu)
+    ti.init(arch=ti.amdgpu)
     print('Using jacobi iteration')
 
 _velocities = ti.Vector.field(2, float, shape=(res, res))

@@ -1,6 +1,6 @@
 import taichi as ti
 
-ti.init(arch=ti.amdgpu)
+ti.init(arch=ti.opengl)
 
 N = 32
 dt = 1e-4

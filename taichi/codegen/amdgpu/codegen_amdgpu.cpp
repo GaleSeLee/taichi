@@ -180,9 +180,9 @@ else if (op == UnaryOpType::x) {                                          \
             } else if (input_taichi_type->is_primitive(PrimitiveTypeID::f64)) {   
                 llvm_val[stmt] = create_call("__ocml_fabs_f64", input); 
             } else if (input_taichi_type->is_primitive(PrimitiveTypeID::i32)) {                                                              
-                auto ashr_ = builder->CreateAShr(input, 31);
-                auto xor_ = builder->CreateXor(ashr_, input);
-                llvm_val[stmt] = builder->CreateSub(xor_, ashr_, "", false, true);
+                auto ashr = builder->CreateAShr(input, 31);
+                auto xor_i32 = builder->CreateXor(ashr, input);
+                llvm_val[stmt] = builder->CreateSub(xor_i32, ashr, "", false, true);
             }
             else {
                 TI_NOT_IMPLEMENTED
@@ -190,49 +190,49 @@ else if (op == UnaryOpType::x) {                                          \
         }
         else if (op == UnaryOpType::sgn) {
             if (input_taichi_type->is_primitive(PrimitiveTypeID::i32)) {
-                auto ashr_ = builder->CreateAShr(input, 31);
-                auto sub_ = builder->CreateSub(0, input);
-                auto lshr_ = builder->CreateLShr(sub_, 31);
-                llvm_val[stmt] = builder->CreateOr(ashr_, lshr_);
+                auto ashr = builder->CreateAShr(input, 31);
+                auto sub = builder->CreateSub(0, input);
+                auto lshr = builder->CreateLShr(sub, 31);
+                llvm_val[stmt] = builder->CreateOr(ashr, lshr);
             }
             else if (input_taichi_type->is_primitive(PrimitiveTypeID::f32)) {
-                auto func_ = builder->GetInsertBlock()->getParent();
-                auto then_0_ = BasicBlock::Create(*llvm_context, "then_0", func_);
-                auto else_0_ = BasicBlock::Create(*llvm_context, "else_0");
-                auto merge_ = BasicBlock::Create(*llvm_context, "merge");
-                auto then_1_ = BasicBlock::Create(*llvm_context, "then_1", func_);
-                auto else_1_ = BasicBlock::Create(*llvm_context, "else_1");
-                auto alloc_ = builder->CreateAlloca(llvm::Type::getFloatTy(*llvm_context), (unsigned)5); 
-                auto newty_ = llvm::PointerType::get(llvm::Type::getFloatTy(*llvm_context), (unsigned)0);
-                auto cast_ = builder->CreateAddrSpaceCast(alloc_, newty_);
-                auto fcmp_oeq_ = builder->CreateFCmpOEQ(input, llvm::ConstantFP::get(llvm::Type::getFloatTy(*llvm_context), 0));
-                builder->CreateCondBr(fcmp_oeq_, then_0_, else_0_);
-                builder->SetInsertPoint(then_0_);
-                builder->CreateStore(llvm::ConstantFP::get(llvm::Type::getFloatTy(*llvm_context), 0), cast_);
-                builder->CreateBr(merge_);
-                then_0_ = builder->GetInsertBlock();
+                auto func = builder->GetInsertBlock()->getParent();
+                auto bb_oeq_then = BasicBlock::Create(*llvm_context, "oeq_then", func);
+                auto bb_oeq_else = BasicBlock::Create(*llvm_context, "oeq_else");
+                auto bb_merge = BasicBlock::Create(*llvm_context, "merge");
+                auto bb_olt_then = BasicBlock::Create(*llvm_context, "olt_then", func);
+                auto bb_olt_else = BasicBlock::Create(*llvm_context, "olt_else");
 
-                func_->getBasicBlockList().push_back(else_0_);
-                builder->SetInsertPoint(else_0_);
-                auto fcmp_olt_ = builder->CreateFCmpOLT(input, llvm::ConstantFP::get(llvm::Type::getFloatTy(*llvm_context), 0));
-                builder->CreateCondBr(fcmp_olt_, then_1_, else_1_);
-                else_0_ = builder->GetInsertBlock();
+                auto alloc = builder->CreateAlloca(llvm::Type::getFloatTy(*llvm_context), (unsigned)5); 
+                auto newty = llvm::PointerType::get(llvm::Type::getFloatTy(*llvm_context), (unsigned)0);
+                auto cast = builder->CreateAddrSpaceCast(alloc, newty);
+                auto fcmp_oeq = builder->CreateFCmpOEQ(input, llvm::ConstantFP::get(llvm::Type::getFloatTy(*llvm_context), 0));
+                builder->CreateCondBr(fcmp_oeq, bb_oeq_then, bb_oeq_else);
+                builder->SetInsertPoint(bb_oeq_then);
+                builder->CreateStore(llvm::ConstantFP::get(llvm::Type::getFloatTy(*llvm_context), 0), cast);
+                builder->CreateBr(bb_merge);
+                bb_oeq_then = builder->GetInsertBlock();
 
-                builder->SetInsertPoint(then_1_);
-                builder->CreateStore(llvm::ConstantFP::get(llvm::Type::getFloatTy(*llvm_context), -1), cast_);
-                builder->CreateBr(merge_);
-                then_1_ = builder->GetInsertBlock();
+                func->getBasicBlockList().push_back(bb_oeq_else);
+                builder->SetInsertPoint(bb_oeq_else);
+                auto fcmp_olt = builder->CreateFCmpOLT(input, llvm::ConstantFP::get(llvm::Type::getFloatTy(*llvm_context), 0));
+                builder->CreateCondBr(fcmp_olt, bb_olt_then, bb_olt_else);
+                bb_oeq_else = builder->GetInsertBlock();
 
-                func_->getBasicBlockList().push_back(else_1_);
-                builder->SetInsertPoint(else_1_);
-                builder->CreateStore(llvm::ConstantFP::get(llvm::Type::getFloatTy(*llvm_context), 1), cast_);
-                builder->CreateBr(merge_);
-                else_1_ = builder->GetInsertBlock();
+                builder->SetInsertPoint(bb_olt_then);
+                builder->CreateStore(llvm::ConstantFP::get(llvm::Type::getFloatTy(*llvm_context), -1), cast);
+                builder->CreateBr(bb_merge);
+                bb_olt_then = builder->GetInsertBlock();
 
-                func_->getBasicBlockList().push_back(merge_);
-                builder->SetInsertPoint(merge_);
-                //llvm_val[stmt]= Builder->CreatePHI(Type::getInt8Ty(*TheContext), 3, "iftmp");
-                llvm_val[stmt]= builder->CreateLoad(llvm::Type::getFloatTy(*llvm_context), cast_);
+                func->getBasicBlockList().push_back(bb_olt_else);
+                builder->SetInsertPoint(bb_olt_else);
+                builder->CreateStore(llvm::ConstantFP::get(llvm::Type::getFloatTy(*llvm_context), 1), cast);
+                builder->CreateBr(bb_merge);
+                bb_olt_else = builder->GetInsertBlock();
+
+                func->getBasicBlockList().push_back(bb_merge);
+                builder->SetInsertPoint(bb_merge);
+                llvm_val[stmt]= builder->CreateLoad(llvm::Type::getFloatTy(*llvm_context), cast);
             }
         }
         UNARY_STD(cos)

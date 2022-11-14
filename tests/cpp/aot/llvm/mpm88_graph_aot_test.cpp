@@ -102,7 +102,7 @@ TEST(LlvmCGraph, Mpm88Cpu) {
   g_update->run(args);
   exec.synchronize();
 }
-
+#ifdef TI_WITH_CUDA
 TEST(LlvmCGraph, Mpm88Cuda) {
   if (is_cuda_api_available()) {
     CompileConfig cfg;
@@ -186,3 +186,4 @@ TEST(LlvmCGraph, Mpm88Cuda) {
     exec.synchronize();
   }
 }
+#endif

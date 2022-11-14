@@ -68,7 +68,7 @@ TEST(LlvmCGraph, RunGraphCpu) {
     EXPECT_EQ(data[i], 3 * i + base0 + base1 + base2);
   }
 }
-
+#ifdef TI_WITH_CUDA
 TEST(LlvmCGraph, RunGraphCuda) {
   if (is_cuda_api_available()) {
     CompileConfig cfg;
@@ -127,3 +127,4 @@ TEST(LlvmCGraph, RunGraphCuda) {
     }
   }
 }
+#endif

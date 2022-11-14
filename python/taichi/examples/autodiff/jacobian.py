@@ -3,7 +3,7 @@ import numpy as np
 
 import taichi as ti
 
-ti.init()
+ti.init(arch=ti.amdgpu)
 
 N_param = 50
 N_loss = 100

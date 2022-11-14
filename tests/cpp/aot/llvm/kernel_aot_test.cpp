@@ -55,7 +55,7 @@ TEST(LlvmAotTest, CpuKernel) {
     EXPECT_EQ(data[i], i);
   }
 }
-
+#ifdef TI_WITH_CUDA
 TEST(LlvmAotTest, CudaKernel) {
   if (is_cuda_api_available()) {
     CompileConfig cfg;
@@ -101,6 +101,7 @@ TEST(LlvmAotTest, CudaKernel) {
     }
   }
 }
+#endif
 
 }  // namespace lang
 }  // namespace taichi

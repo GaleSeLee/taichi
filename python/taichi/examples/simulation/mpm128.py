@@ -1,6 +1,6 @@
 import taichi as ti
 
-ti.init(arch=ti.gpu)  # Try to run on GPU
+ti.init(arch=ti.amdgpu)  # Try to run on GPU
 
 quality = 1  # Use a larger value for higher-res simulations
 n_particles, n_grid = 9000 * quality**2, 128 * quality

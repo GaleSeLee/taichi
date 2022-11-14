@@ -85,7 +85,7 @@ TEST(LlvmAotTest, CpuBitmasked) {
 
   run_bitmasked_tests(mod.get(), &exec, result_buffer);
 }
-
+#ifdef TI_WITH_CUDA
 TEST(LlvmAotTest, CudaBitmasked) {
   if (is_cuda_api_available()) {
     CompileConfig cfg;
@@ -110,6 +110,7 @@ TEST(LlvmAotTest, CudaBitmasked) {
     run_bitmasked_tests(mod.get(), &exec, result_buffer);
   }
 }
+#endif
 
 }  // namespace lang
 }  // namespace taichi

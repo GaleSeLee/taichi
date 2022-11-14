@@ -30,6 +30,9 @@ def _run_cpp_test(test_filename, build_dir, gtest_option="", extra_env=None):
         if extra_env: env_copy.update(extra_env)
 
         subprocess.check_call(cmd, env=env_copy, cwd=build_dir)
+    else:
+        print(fullpath)
+        print("error")
 
 
 def _test_cpp_aot(test_filename, build_dir, test_info):
@@ -73,16 +76,14 @@ def _test_cpp():
         build_dir = os.path.join(curr_dir, '../build')
 
     # Run C-API test cases
-    exclude_tests_cmd = _test_cpp_aot(capi_test_filename, build_dir,
-                                      __capi_aot_test_cases)
-    _run_cpp_test(capi_test_filename, build_dir, exclude_tests_cmd)
+    #exclude_tests_cmd = _test_cpp_aot(capi_test_filename, build_dir,
+    #                                  __capi_aot_test_cases)
+    #_run_cpp_test(capi_test_filename, build_dir, exclude_tests_cmd)
 
-    # # Run AOT test cases
-    # exclude_tests_cmd = _test_cpp_aot(cpp_test_filename, build_dir,
-    #                                   __aot_test_cases)
-
-    # # Run rest of the cpp tests
-    # _run_cpp_test(cpp_test_filename, build_dir, exclude_tests_cmd)
+     # Run AOT test cases
+    exclude_tests_cmd = "--gtest_filter=-LlvmAotTest.CpuKernel:LlvmAotTest.CudaKernel:LlvmAotTest.CpuField:LlvmAotTest.CudaField:LlvmAotTest.CpuDynamic:LlvmAotTest.CudaDynamic:LlvmAotTest.CpuBitmasked:LlvmAotTest.CudaBitmasked:LlvmCGraph.RunGraphCpu:LlvmCGraph.RunGraphCuda:LlvmCGraph.CpuField:LlvmCGraph.CudaField:LlvmCGraph.Mpm88Cpu:LlvmCGraph.Mpm88Cuda:CGraphAotTest.VulkanMpm88:CGraphAotTest.OpenglMpm88:GfxAotTest.VulkanDenseField:GfxAotTest.OpenglDenseField:GfxAotTest.VulkanKernelTest1:GfxAotTest.OpenglKernelTest1:GfxAotTest.VulkanKernelTest2:GfxAotTest.OpenglKernelTest2:CGraphAotTest.VulkanRunCGraph1:CGraphAotTest.VulkanRunCGraph2:CGraphAotTest.OpenglRunCGraph1:CGraphAotTest.OpenglRunCGraph2"
+    #Run rest of the cpp tests
+    _run_cpp_test(cpp_test_filename, build_dir, exclude_tests_cmd)
 
 
 def _test_python(args):

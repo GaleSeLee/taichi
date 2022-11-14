@@ -11,16 +11,17 @@ endif()
 # 1. "cpp" -> "cpp_legacy", "cpp_new" -> "cpp"
 # 2. Re-implement the legacy CPP tests using googletest
 file(GLOB_RECURSE TAICHI_TESTS_SOURCE
-        "tests/cpp/analysis/*.cpp"
-        "tests/cpp/aot/llvm/*.cpp"
+        #"tests/cpp/analysis/*.cpp"
+        #"tests/cpp/aot/llvm/*.cpp"
         "tests/cpp/backends/*.cpp"
-        "tests/cpp/codegen/*.cpp"
+        #"tests/cpp/codegen/*.cpp"
         "tests/cpp/common/*.cpp"
-        "tests/cpp/ir/*.cpp"
-        "tests/cpp/llvm/*.cpp"
+        #"tests/cpp/ir/*.cpp"
+        #"tests/cpp/llvm/*.cpp"
         "tests/cpp/program/*.cpp"
         "tests/cpp/struct/*.cpp"
-        "tests/cpp/transforms/*.cpp")
+        "tests/cpp/transforms/*.cpp"
+        )
 
 if (TI_WITH_OPENGL OR TI_WITH_VULKAN)
     file(GLOB TAICHI_TESTS_GFX_UTILS_SOURCE
@@ -48,6 +49,7 @@ if (WIN32)
     set_target_properties(${TESTS_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY_MINSIZEREL ${TESTS_OUTPUT_DIR})
     set_target_properties(${TESTS_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO ${TESTS_OUTPUT_DIR})
 endif()
+message(STATUS "TESTS_OUTPUT_DIR = "${TESTS_OUTPUT_DIR})
 target_link_libraries(${TESTS_NAME} PRIVATE taichi_core)
 target_link_libraries(${TESTS_NAME} PRIVATE gtest_main)
 

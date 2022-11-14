@@ -348,6 +348,8 @@ std::unique_ptr<llvm::Module> TaichiLLVMContext::module_from_file(
       fmt::format("{}/{}", runtime_lib_dir(), file), ctx);
 
   
+  if (arch_ == Arch::cuda || arch_ == Arch::amdgpu) {
+#if defined(TI_WITH_CUDA) || defined(TI_WITH_AMDGPU)
   auto patch_intrinsic = [&](std::string name, Intrinsic::ID intrin,
                               bool ret = true,
                               std::vector<llvm::Type *> types = {},
@@ -421,6 +423,12 @@ std::unique_ptr<llvm::Module> TaichiLLVMContext::module_from_file(
       builder.CreateRet(ret_);
       TaichiLLVMContext::mark_inline(func);
   };
+    patch_atomic_add("atomic_add_i32", llvm::AtomicRMWInst::Add);
+    patch_atomic_add("atomic_add_i64", llvm::AtomicRMWInst::Add);
+    patch_atomic_add("atomic_add_f64", llvm::AtomicRMWInst::FAdd);
+    patch_atomic_add("atomic_add_f32", llvm::AtomicRMWInst::FAdd);
+#endif
+  
 
   if (arch_ == Arch::cuda) {
     module->setTargetTriple("nvptx64-nvidia-cuda");
@@ -503,14 +511,6 @@ std::unique_ptr<llvm::Module> TaichiLLVMContext::module_from_file(
     patch_intrinsic("cttz_i32", Intrinsic::cttz, true,
                     {llvm::Type::getInt32Ty(*ctx)}, {get_constant(false)});
 
-    patch_atomic_add("atomic_add_i32", llvm::AtomicRMWInst::Add);
-
-    patch_atomic_add("atomic_add_i64", llvm::AtomicRMWInst::Add);
-
-    patch_atomic_add("atomic_add_f32", llvm::AtomicRMWInst::FAdd);
-
-    patch_atomic_add("atomic_add_f64", llvm::AtomicRMWInst::FAdd);
-
     patch_intrinsic("block_memfence", Intrinsic::nvvm_membar_cta, false);
 
     link_module_with_cuda_libdevice(module);
@@ -529,8 +529,9 @@ std::unique_ptr<llvm::Module> TaichiLLVMContext::module_from_file(
 
   if (arch_ == Arch::amdgpu) {
     module->setTargetTriple("amdgcn-amd-amdhsa");
+#ifdef TI_WITH_AMDGPU
     for (auto &f : *module) {
-       f.addFnAttr("target-cpu","gfx1030");
+       f.addFnAttr("target-cpu","");
        f.addFnAttr("target-features","");
       for (auto &bb: f) {
         std::vector<llvm::AllocaInst*> alloca_inst_vec;
@@ -549,9 +550,6 @@ std::unique_ptr<llvm::Module> TaichiLLVMContext::module_from_file(
             auto new_type = llvm::PointerType::get(alloca_type, (unsigned)0);
             new_alloca->setAlignment(llvm::Align(allocainst->getAlignment()));
             auto *addrspacecast = builder.CreateAddrSpaceCast(new_alloca, new_type);
-            //if (addrspacecast->getType() != allocainst->getType()) {
-            //  int a = 1;
-           // }
             allocainst->replaceAllUsesWith(addrspacecast);
             allocainst->eraseFromParent();
         }
@@ -559,10 +557,6 @@ std::unique_ptr<llvm::Module> TaichiLLVMContext::module_from_file(
     }
     patch_intrinsic("thread_idx", llvm::Intrinsic::amdgcn_workitem_id_x);
     patch_intrinsic("block_idx", llvm::Intrinsic::amdgcn_workgroup_id_x);
-    patch_atomic_add("atomic_add_i32", llvm::AtomicRMWInst::Add);
-    patch_atomic_add("atomic_add_i64", llvm::AtomicRMWInst::Add);
-    patch_atomic_add("atomic_add_f64", llvm::AtomicRMWInst::FAdd);
-    patch_atomic_add("atomic_add_f32", llvm::AtomicRMWInst::FAdd);
 
     link_module_with_amdgpu_libdevice(module);
     /*
@@ -574,6 +568,9 @@ std::unique_ptr<llvm::Module> TaichiLLVMContext::module_from_file(
     */
     patch_dim("block_dim", llvm::ConstantInt::get(llvm::Type::getInt32Ty(*ctx), 0));
     patch_dim("grid_dim", llvm::ConstantInt::get(llvm::Type::getInt32Ty(*ctx), 0));
+#endif
+  }
+
   }
   return module;
 }
@@ -619,6 +616,7 @@ void TaichiLLVMContext::link_module_with_amdgpu_libdevice(
     "oclc_daz_opt_on",
     "ocml",
     "oclc_wavefrontsize64_off",
+    //"oclc_wavefrontsize64_on",
     "ockl",
     "oclc_correctly_rounded_sqrt_off",
     "oclc_correctly_rounded_sqrt_on",
@@ -979,77 +977,67 @@ void TaichiLLVMContext::update_runtime_jit_module(
     }
   }
 
-  if (arch_ == Arch::amdgpu) {
+    if (arch_ == Arch::amdgpu) {
     for (auto &f : *module) {
       bool is_kernel = false;
       const std::string func_name = f.getName().str();
       if (starts_with(func_name, "runtime_")) {
         mark_function_as_amdgpu_kernel(&f);
-        // compile runtime_amdgpu with clang or hipcc
-        // we don't need to mark function as a amdgpu kernel
         is_kernel = true;
       }
       if (!is_kernel && !f.isDeclaration())
         f.setLinkage(llvm::Function::PrivateLinkage);
     }
     std::vector<llvm::Function *> global_func;
-    std::vector<llvm::Function *> device_func;
     for (auto &f : *module) {
-      if (f.getCallingConv() == llvm::CallingConv::AMDGPU_KERNEL) {
+      if (f.getCallingConv() == llvm::CallingConv::AMDGPU_KERNEL)
         global_func.push_back(&f);
-      }
-      else {
-        device_func.push_back(&f);
-      }
     }
     for (auto &f : global_func) {
-      llvm::FunctionType *FTy = f->getFunctionType();
-      std::vector<llvm::Type*> NFParams;
+      llvm::FunctionType *func_type = f->getFunctionType();
+      std::vector<llvm::Type*> new_func_params;
       for (auto &arg : f->args()) {
         if (arg.getType()->getTypeID() == llvm::Type::PointerTyID) {
           auto new_type = llvm::PointerType::get(arg.getType()->getPointerElementType(), unsigned(1));
-          NFParams.push_back(new_type);
+          new_func_params.push_back(new_type);
         }
         else {
-          NFParams.push_back(arg.getType());
+          new_func_params.push_back(arg.getType());
         }
-      } 
-      auto NFTy = llvm::FunctionType::get(FTy->getReturnType(), NFParams, false);
-      auto NF = llvm::Function::Create(NFTy, f->getLinkage(), f->getAddressSpace());
-      //NF->copyAttributesFrom(f);
-      NF->setCallingConv(llvm::CallingConv::AMDGPU_KERNEL);
-      NF->addFnAttr("amdgpu-flat-work-group-size", "1, 1024");
-      NF->addFnAttr("target-cpu", "gfx1030");
-      NF->addFnAttr("frame-pointer", "all");
-      NF->addFnAttr("no-trapping-math", "true");
-      NF->addFnAttr("stack-protector-buffer-size", "8");
-      NF->addFnAttr("target-features", "+16-bit-insts,+ci-insts,+dl-insts,+dot1-insts,+dot2-insts,+dot5-insts,+dot6-insts,+dot7-insts,+dpp,+flat-address-space,+gfx10-3-insts,+gfx10-insts,+gfx8-insts,+gfx9-insts,+s-memrealtime,+s-memtime-inst");
-      NF->setComdat(f->getComdat());
-      f->getParent()->getFunctionList().insert(f->getIterator(), NF);
-      NF->takeName(f);
-      NF->getBasicBlockList().splice(NF->begin(), f->getBasicBlockList());
+      }
+      auto new_func_type = llvm::FunctionType::get(func_type->getReturnType(), new_func_params, false);
+      auto new_func = llvm::Function::Create(new_func_type, f->getLinkage(), f->getAddressSpace());
+      new_func->setCallingConv(llvm::CallingConv::AMDGPU_KERNEL);
+      new_func->addFnAttr("amdgpu-flat-work-group-size", "1, 1024");
+      new_func->setComdat(f->getComdat());
+      f->getParent()->getFunctionList().insert(f->getIterator(), new_func);
+      new_func->takeName(f);
+      new_func->getBasicBlockList().splice(new_func->begin(), f->getBasicBlockList());
       for (llvm::Function::arg_iterator I = f->arg_begin(), E = f->arg_end(),
-                                  I2 = NF->arg_begin(); I != E; ++I, ++I2) {
+                                  I2 = new_func->arg_begin(); I != E; ++I, ++I2) {
         if (I->getType()->getTypeID() == llvm::Type::PointerTyID) {
-          auto &front_bb = NF->getBasicBlockList().front();
+          auto &front_bb = new_func->getBasicBlockList().front();
           llvm::Instruction *addrspacecast = new AddrSpaceCastInst(I2, I->getType());
           front_bb.getInstList().insertAfter(front_bb.getFirstInsertionPt(), addrspacecast);
           I->replaceAllUsesWith(addrspacecast);
           I2->takeName(&*I);
-        } 
+        }
         else {
           I->replaceAllUsesWith(&*I2);
           I2->takeName(&*I);
         }
       }
+
       SmallVector<std::pair<unsigned, MDNode *>, 1> MDs;
       f->getAllMetadata(MDs);
-      for (auto [KindID, Node] : MDs)
-        NF->addMetadata(KindID, *Node);
+      int md_count = 0;
+      for (auto [KindID, Node] : MDs) {
+        new_func->addMetadata(KindID, *Node);
+        md_count ++;
+      }
+      std::cout << md_count << std::endl;
       f->eraseFromParent();
     }
-    
-
   }
 
   eliminate_unused_functions(module.get(), [](std::string func_name) {

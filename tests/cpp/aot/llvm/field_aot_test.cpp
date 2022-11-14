@@ -118,6 +118,7 @@ TEST(LlvmAotTest, CpuField) {
   run_field_tests(mod.get(), &exec, result_buffer);
 }
 
+#ifdef TI_WITH_CUDA
 TEST(LlvmAotTest, CudaField) {
   if (is_cuda_api_available()) {
     CompileConfig cfg;
@@ -142,6 +143,7 @@ TEST(LlvmAotTest, CudaField) {
     run_field_tests(mod.get(), &exec, result_buffer);
   }
 }
+#endif
 
 }  // namespace lang
 }  // namespace taichi
