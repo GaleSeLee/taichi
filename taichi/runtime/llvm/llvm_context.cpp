@@ -613,22 +613,16 @@ void TaichiLLVMContext::link_module_with_amdgpu_libdevice(
     std::unique_ptr<llvm::Module> &module) {
   TI_ASSERT(arch_ == Arch::amdgpu);
   std::string libdevice_paths[] = {
-    "oclc_daz_opt_on",
     "ocml",
     "oclc_wavefrontsize64_off",
-    //"oclc_wavefrontsize64_on",
     "ockl",
+    "oclc_abi_version_400"
     "oclc_correctly_rounded_sqrt_off",
-    "oclc_correctly_rounded_sqrt_on",
     "oclc_daz_opt_off",
     "oclc_finite_only_off",
-    "oclc_finite_only_on",
     "oclc_isa_version_1030",  
     "oclc_unsafe_math_off",
-    "oclc_unsafe_math_on",
-    //"asanrtl",
-    //"hip",
-    //"opencl"
+    "opencl"
   };
   module->setDataLayout(llvm::DataLayout(
       "e-p:64:64-p1:64:64-p2:32:32-p3:32:32-p4:64:64-p5:32:32-p6:32:32-i64:64-v16:16-v24:32-"
