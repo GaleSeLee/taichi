@@ -548,7 +548,7 @@ std::unique_ptr<llvm::Module> TaichiLLVMContext::module_from_file(
             llvm::IRBuilder<> builder(allocainst);
             auto *new_alloca = builder.CreateAlloca(alloca_type, (unsigned)5);
             auto new_type = llvm::PointerType::get(alloca_type, (unsigned)0);
-            new_alloca->setAlignment(llvm::Align(allocainst->getAlignment()));
+            new_alloca->setAlignment(llvm::Align(allocainst->getAlign().value()));
             auto *addrspacecast = builder.CreateAddrSpaceCast(new_alloca, new_type);
             allocainst->replaceAllUsesWith(addrspacecast);
             allocainst->eraseFromParent();

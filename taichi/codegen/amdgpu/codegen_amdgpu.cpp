@@ -162,7 +162,7 @@ else if (op == UnaryOpType::x) {                                          \
     } else if (input_taichi_type->is_primitive(PrimitiveTypeID::f64)) {   \
         llvm_val[stmt] = create_call("__ocml_" #x "_f64", input);         \
     } else {                                                              \
-        TI_NOT_IMPLEMENTED                                                \   
+        TI_NOT_IMPLEMENTED                                                \
     }                                                                     \
 }
         if (op == UnaryOpType::logic_not) {
