@@ -49,6 +49,9 @@
 #include "taichi/util/environ_config.h"
 #include "llvm_context.h"
 #include "taichi/runtime/program_impls/llvm/llvm_program.h"
+#ifdef TI_WITH_AMDGPU
+#include "taichi/runtime/llvm/llvm_context_pass.h"
+#endif
 
 #ifdef _WIN32
 // Travis CI seems doesn't support <filesystem>...
@@ -530,41 +533,17 @@ std::unique_ptr<llvm::Module> TaichiLLVMContext::module_from_file(
   if (arch_ == Arch::amdgpu) {
     module->setTargetTriple("amdgcn-amd-amdhsa");
 #ifdef TI_WITH_AMDGPU
-    for (auto &f : *module) {
-       f.addFnAttr("target-features","");
-      for (auto &bb: f) {
-        std::vector<llvm::AllocaInst*> alloca_inst_vec;
-        for (llvm::Instruction &inst : bb) {
-            llvm::AllocaInst* now_alloca = llvm::dyn_cast<AllocaInst>(&inst);
-            if (!now_alloca || 
-                now_alloca->getType()->getAddressSpace() != (unsigned)0) {
-              continue;
-            }
-            alloca_inst_vec.push_back(now_alloca);
-        }
-        for (auto &allocainst : alloca_inst_vec) {
-            auto alloca_type = allocainst->getAllocatedType();
-            llvm::IRBuilder<> builder(allocainst);
-            auto *new_alloca = builder.CreateAlloca(alloca_type, (unsigned)5);
-            auto new_type = llvm::PointerType::get(alloca_type, (unsigned)0);
-            new_alloca->setAlignment(llvm::Align(allocainst->getAlign().value()));
-            auto *addrspacecast = builder.CreateAddrSpaceCast(new_alloca, new_type);
-            allocainst->replaceAllUsesWith(addrspacecast);
-            allocainst->eraseFromParent();
-        }
-      }
+    llvm::legacy::FunctionPassManager function_pass_manager(module.get());
+    function_pass_manager.add(new AMDGPUConvertAllocaInstAddressSpacePass());
+    function_pass_manager.doInitialization();
+    for (auto func = module->begin(); func != module->end(); ++func) {
+      function_pass_manager.run(*func);
     }
+    function_pass_manager.doFinalization();
     patch_intrinsic("thread_idx", llvm::Intrinsic::amdgcn_workitem_id_x);
     patch_intrinsic("block_idx", llvm::Intrinsic::amdgcn_workgroup_id_x);
 
     link_module_with_amdgpu_libdevice(module);
-    /*
-    for (auto &f : *module) {
-      if (f.getName() == "amdgpu_vprintf") {
-        f.setName("printf");
-      }
-    }
-    */
     patch_dim("block_dim", llvm::ConstantInt::get(llvm::Type::getInt32Ty(*ctx), 0));
     patch_dim("grid_dim", llvm::ConstantInt::get(llvm::Type::getInt32Ty(*ctx), 0));
 #endif
@@ -619,7 +598,7 @@ void TaichiLLVMContext::link_module_with_amdgpu_libdevice(
     "oclc_correctly_rounded_sqrt_off",
     "oclc_daz_opt_off",
     "oclc_finite_only_off",
-    "oclc_isa_version_1030",  
+    "oclc_isa_version_" + AMDGPUContext::get_instance().get_mcpu().substr(3,4),  
     "oclc_unsafe_math_off",
     "opencl"
   };
@@ -837,11 +816,6 @@ void TaichiLLVMContext::insert_nvvm_annotation(llvm::Function *func,
       ->addOperand(md_node);
 }
 
-void TaichiLLVMContext::mark_function_as_amdgpu_kernel(llvm::Function *func) {
-    func->setCallingConv(llvm::CallingConv::AMDGPU_KERNEL);
-    func->addFnAttr("amdgpu-flat-work-group-size", "1, 256");
-}
-
 void TaichiLLVMContext::mark_function_as_cuda_kernel(llvm::Function *func,
                                                      int block_dim) {
   // Mark kernel function as a CUDA __global__ function
@@ -969,67 +943,10 @@ void TaichiLLVMContext::update_runtime_jit_module(
     }
   }
 
-    if (arch_ == Arch::amdgpu) {
-    for (auto &f : *module) {
-      bool is_kernel = false;
-      const std::string func_name = f.getName().str();
-      if (starts_with(func_name, "runtime_")) {
-        mark_function_as_amdgpu_kernel(&f);
-        is_kernel = true;
-      }
-      if (!is_kernel && !f.isDeclaration())
-        f.setLinkage(llvm::Function::PrivateLinkage);
-    }
-    std::vector<llvm::Function *> global_func;
-    for (auto &f : *module) {
-      if (f.getCallingConv() == llvm::CallingConv::AMDGPU_KERNEL)
-        global_func.push_back(&f);
-    }
-    for (auto &f : global_func) {
-      llvm::FunctionType *func_type = f->getFunctionType();
-      std::vector<llvm::Type*> new_func_params;
-      for (auto &arg : f->args()) {
-        if (arg.getType()->getTypeID() == llvm::Type::PointerTyID) {
-          auto new_type = llvm::PointerType::get(arg.getType()->getPointerElementType(), unsigned(1));
-          new_func_params.push_back(new_type);
-        }
-        else {
-          new_func_params.push_back(arg.getType());
-        }
-      }
-      auto new_func_type = llvm::FunctionType::get(func_type->getReturnType(), new_func_params, false);
-      auto new_func = llvm::Function::Create(new_func_type, f->getLinkage(), f->getAddressSpace());
-      new_func->setCallingConv(llvm::CallingConv::AMDGPU_KERNEL);
-      new_func->addFnAttr("amdgpu-flat-work-group-size", "1, 1024");
-      new_func->setComdat(f->getComdat());
-      f->getParent()->getFunctionList().insert(f->getIterator(), new_func);
-      new_func->takeName(f);
-      new_func->getBasicBlockList().splice(new_func->begin(), f->getBasicBlockList());
-      for (llvm::Function::arg_iterator I = f->arg_begin(), E = f->arg_end(),
-                                  I2 = new_func->arg_begin(); I != E; ++I, ++I2) {
-        if (I->getType()->getTypeID() == llvm::Type::PointerTyID) {
-          auto &front_bb = new_func->getBasicBlockList().front();
-          llvm::Instruction *addrspacecast = new AddrSpaceCastInst(I2, I->getType());
-          front_bb.getInstList().insertAfter(front_bb.getFirstInsertionPt(), addrspacecast);
-          I->replaceAllUsesWith(addrspacecast);
-          I2->takeName(&*I);
-        }
-        else {
-          I->replaceAllUsesWith(&*I2);
-          I2->takeName(&*I);
-        }
-      }
-
-      SmallVector<std::pair<unsigned, MDNode *>, 1> MDs;
-      f->getAllMetadata(MDs);
-      int md_count = 0;
-      for (auto [KindID, Node] : MDs) {
-        new_func->addMetadata(KindID, *Node);
-        md_count ++;
-      }
-      std::cout << md_count << std::endl;
-      f->eraseFromParent();
-    }
+  if (arch_ == Arch::amdgpu) {
+    llvm::legacy::PassManager module_pass_manager;
+    module_pass_manager.add(new AMDGPUConvertFuncParamAddressSpacePass());
+    module_pass_manager.run(*module);
   }
 
   eliminate_unused_functions(module.get(), [](std::string func_name) {
