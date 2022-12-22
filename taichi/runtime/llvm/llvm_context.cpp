@@ -531,7 +531,6 @@ std::unique_ptr<llvm::Module> TaichiLLVMContext::module_from_file(
     module->setTargetTriple("amdgcn-amd-amdhsa");
 #ifdef TI_WITH_AMDGPU
     for (auto &f : *module) {
-       f.addFnAttr("target-cpu","");
        f.addFnAttr("target-features","");
       for (auto &bb: f) {
         std::vector<llvm::AllocaInst*> alloca_inst_vec;
@@ -616,7 +615,7 @@ void TaichiLLVMContext::link_module_with_amdgpu_libdevice(
     "ocml",
     "oclc_wavefrontsize64_off",
     "ockl",
-    "oclc_abi_version_400"
+    "oclc_abi_version_400",
     "oclc_correctly_rounded_sqrt_off",
     "oclc_daz_opt_off",
     "oclc_finite_only_off",
@@ -841,7 +840,6 @@ void TaichiLLVMContext::insert_nvvm_annotation(llvm::Function *func,
 void TaichiLLVMContext::mark_function_as_amdgpu_kernel(llvm::Function *func) {
     func->setCallingConv(llvm::CallingConv::AMDGPU_KERNEL);
     func->addFnAttr("amdgpu-flat-work-group-size", "1, 256");
-    func->addFnAttr("target-cpu", "gfx1030");
 }
 
 void TaichiLLVMContext::mark_function_as_cuda_kernel(llvm::Function *func,
