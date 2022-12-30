@@ -67,21 +67,19 @@ class JITModuleAMDGPU : public JITModule {
   }
 
   void call(const std::string &name,
-            void* arg_pointers,
-            int arg_bytes) override {
-    launch(name, 1, 1, 0, arg_pointers, arg_bytes);
+            const std::vector<void *> &arg_pointers) override {
+    launch(name, 1, 1, 0, arg_pointers);
   }
 
   void launch(const std::string &name,
               std::size_t grid_dim,
               std::size_t block_dim,
               std::size_t dynamic_shared_mem_bytes,
-              void *arg_pointers,
-              int arg_bytes) override {
+              const std::vector<void *> &arg_pointers) override {
     auto func = lookup_function(name);
     AMDGPUContext::get_instance().launch(func, name, arg_pointers,
                                          grid_dim, block_dim,
-                                         dynamic_shared_mem_bytes, arg_bytes);
+                                         dynamic_shared_mem_bytes);
   }
 
   bool direct_dispatch() const override {

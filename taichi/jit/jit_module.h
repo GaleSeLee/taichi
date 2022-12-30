@@ -72,8 +72,9 @@ class JITModule {
     } else {
       auto arg_bytes = JITModule::get_args_bytes(args...);
       char *packed_args = (char*)std::malloc(arg_bytes);
+      *(int *)packed_args = (int)arg_bytes;
       JITModule::init_args_pointers(packed_args, args...);
-      call(name, (void*)packed_args, (int)arg_bytes);
+      call(name, { (void*)packed_args , (void*)&arg_bytes});
       std::free(packed_args);
     }
   }
@@ -99,7 +100,7 @@ class JITModule {
 
   virtual void call(const std::string &name,
                     void *arg_pointers,
-                    int arg_bytes) {
+                    int ) {
     TI_NOT_IMPLEMENTED
   }
 
@@ -121,15 +122,6 @@ class JITModule {
                       std::size_t block_dim,
                       std::size_t shared_mem_bytes,
                       const std::vector<void *> &arg_pointers) {
-    TI_NOT_IMPLEMENTED
-  }
-
-  virtual void launch(const std::string &name,
-                      std::size_t grid_dim,
-                      std::size_t block_dim,
-                      std::size_t shared_mem_bytes,
-                      void *arg_pointers,
-                      int arg_bytes) {
     TI_NOT_IMPLEMENTED
   }
 
