@@ -67,17 +67,19 @@ class JITModuleAMDGPU : public JITModule {
   }
 
   void call(const std::string &name,
-            const std::vector<void *> &arg_pointers) override {
-    launch(name, 1, 1, 0, arg_pointers);
+            const std::vector<void *> &arg_pointers,
+            const std::vector<int> &arg_sizes) override {
+    launch(name, 1, 1, 0, arg_pointers, arg_sizes);
   }
 
   void launch(const std::string &name,
               std::size_t grid_dim,
               std::size_t block_dim,
               std::size_t dynamic_shared_mem_bytes,
-              const std::vector<void *> &arg_pointers) override {
+              const std::vector<void *> &arg_pointers,
+              const std::vector<int> &arg_sizes) override {
     auto func = lookup_function(name);
-    AMDGPUContext::get_instance().launch(func, name, arg_pointers,
+    AMDGPUContext::get_instance().launch(func, name, arg_pointers, arg_sizes,
                                          grid_dim, block_dim,
                                          dynamic_shared_mem_bytes);
   }
@@ -96,8 +98,8 @@ class JITSessionAMDGPU : public JITSession {
                  CompileConfig *config,
                  llvm::DataLayout data_layout)
       : JITSession(tlctx, config), data_layout(data_layout) {
+        char *env_dir = std::getenv("TI_TMP_DIR");
         random_num_ = get_random_num();
-                char *env_dir = std::getenv("TI_TMP_DIR");
         tmp_dir_ = "/tmp/taichi_hsaco/";
         if (env_dir) {
           tmp_dir_ = env_dir;

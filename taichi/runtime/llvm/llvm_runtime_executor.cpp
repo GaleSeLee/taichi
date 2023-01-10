@@ -604,15 +604,15 @@ uint64_t *LlvmRuntimeExecutor::get_ndarray_alloc_info_ptr(
 void LlvmRuntimeExecutor::finalize() {
   if (runtime_mem_info_)
     runtime_mem_info_->set_profiler(nullptr);
-#if defined(TI_WITH_CUDA)
   if (preallocated_device_buffer_ != nullptr) {
-    cuda_device()->dealloc_memory(preallocated_device_buffer_alloc_);
+    if (config_->arch == Arch::cuda) {
+      cuda_device()->dealloc_memory(preallocated_device_buffer_alloc_);
+    } else if (config_->arch == Arch::amdgpu) {
+      amdgpu_device()->dealloc_memory(preallocated_device_buffer_alloc_);
+    } else {
+      TI_ERROR("Unknown device memory");
+    }
   }
-#elif defined(TI_WITH_AMDGPU)
-  if (preallocated_device_buffer_ != nullptr) {
-    amdgpu_device()->dealloc_memory(preallocated_device_buffer_alloc_);
-  }
-#endif
 }
 
 void LlvmRuntimeExecutor::materialize_runtime(MemoryPool *memory_pool,

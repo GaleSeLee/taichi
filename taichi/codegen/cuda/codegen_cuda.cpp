@@ -802,7 +802,7 @@ FunctionType CUDAModuleToFunctionConverter::convert(
         TI_TRACE("Launching kernel {}<<<{}, {}>>>", task.name, task.grid_dim,
                  task.block_dim);
         cuda_modules[i]->launch(task.name, task.grid_dim, task.block_dim, 0,
-                                {&context});
+                                {&context}, {});
       }
     }
 
