@@ -2641,6 +2641,19 @@ LLVMCompiledTask TaskCodeGenLLVM::run_compilation() {
     }
   }
 
+  if (config.arch == Arch::amdgpu) {
+    for (const auto &task : offloaded_tasks) {
+      llvm::Function *func = module->getFunction(task.name);
+      TI_ASSERT(func);
+      func->setCallingConv(llvm::CallingConv::AMDGPU_KERNEL);
+    }
+  }
+  // std::string outstr;
+  // llvm::raw_string_ostream ostream(outstr);
+  // ostream << *module.get();
+  // ostream.flush();
+  // std::cout << outstr << std::endl;
+
   return {std::move(offloaded_tasks), std::move(module),
           std::move(used_tree_ids), std::move(struct_for_tls_sizes)};
 }

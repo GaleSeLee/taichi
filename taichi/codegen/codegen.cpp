@@ -144,6 +144,11 @@ LLVMCompiledKernel KernelCodeGen::compile_kernel_to_module() {
     TI_DEBUG("Cache kernel '{}' (key='{}')", kernel->get_name(), kernel_key);
     cache_kernel(kernel_key, linked);
   }
+    // std::string outstr;
+    // llvm::raw_string_ostream ostream(outstr);
+    // ostream << *linked.module.get();
+    // ostream.flush();
+    // std::cout << outstr << std::endl;
   return linked;
 }
 
