@@ -577,6 +577,7 @@ def test_indexing():
     @ti.kernel
     def foo():
         m = ti.Matrix([[0., 0., 0., 0.] for _ in range(4)])
+        print(m[0])
 
     with pytest.raises(TaichiCompilationError,
                        match=r'Expected 2 indices, got 1'):
@@ -585,6 +586,7 @@ def test_indexing():
     @ti.kernel
     def bar():
         vec = ti.Vector([1, 2, 3, 4])
+        print(vec[0, 0])
 
     with pytest.raises(TaichiCompilationError,
                        match=r'Expected 1 indices, got 2'):
@@ -598,6 +600,7 @@ def test_indexing_in_fields():
     @ti.kernel
     def foo():
         f[None][0, 0] = 1.0
+        print(f[None][0])
 
     with pytest.raises(TaichiCompilationError,
                        match=r'Expected 2 indices, got 1'):
@@ -608,6 +611,7 @@ def test_indexing_in_fields():
     @ti.kernel
     def bar():
         g[None][0] = 1.0
+        print(g[None][0, 0])
 
     with pytest.raises(TaichiCompilationError,
                        match=r'Expected 1 indices, got 2'):
@@ -619,6 +623,7 @@ def test_indexing_in_struct():
     @ti.kernel
     def foo():
         s = ti.Struct(a=ti.Vector([0, 0, 0]), b=2)
+        print(s.a[0, 0])
 
     with pytest.raises(TaichiCompilationError,
                        match=r'Expected 1 indices, got 2'):
@@ -627,6 +632,7 @@ def test_indexing_in_struct():
     @ti.kernel
     def bar():
         s = ti.Struct(m=ti.Matrix([[0, 0, 0], [0, 0, 0]]), n=2)
+        print(s.m[0])
 
     with pytest.raises(TaichiCompilationError,
                        match=r'Expected 2 indices, got 1'):
@@ -645,7 +651,7 @@ def test_indexing_in_struct_field():
 
     @ti.kernel
     def foo():
-        a = 1
+        print(s[None].v[0, 0])
 
     with pytest.raises(TaichiCompilationError,
                        match=r'Expected 1 indices, got 2'):
@@ -653,7 +659,7 @@ def test_indexing_in_struct_field():
 
     @ti.kernel
     def bar():
-        a = 1
+        print(s[None].m[0])
 
 
     with pytest.raises(TaichiCompilationError,
