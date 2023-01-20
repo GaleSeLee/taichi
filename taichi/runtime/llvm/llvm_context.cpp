@@ -997,7 +997,6 @@ LLVMCompiledKernel TaichiLLVMContext::link_compiled_tasks(
   std::unordered_set<std::string> offloaded_names;
   auto mod = new_module("kernel", linking_context_data->llvm_context);
   llvm::Linker linker(*mod);
-  std::cout << data_list.size() << std::endl;
   for (auto &datum : data_list) {
     for (auto tree_id : datum->used_tree_ids) {
       used_tree_ids.insert(tree_id);
@@ -1082,18 +1081,35 @@ void TaichiLLVMContext::add_struct_for_func(llvm::Module *module,
   auto new_type = llvm::ArrayType::get(char_type, tls_size);
   {
     llvm::IRBuilder<> builder(alloca);
-    auto *new_alloca = builder.CreateAlloca(new_type);
-    new_alloca->setAlignment(Align(8));
-    TI_ASSERT(alloca->hasOneUse());
-    // TODO
-    // For AMDGPU user_back is addrspace cast
-    auto *gep = llvm::cast<llvm::GetElementPtrInst>(alloca->user_back());
-    TI_ASSERT(gep->getPointerOperand() == alloca);
-    std::vector<Value *> indices(gep->idx_begin(), gep->idx_end());
-    builder.SetInsertPoint(gep);
-    auto *new_gep = builder.CreateInBoundsGEP(new_type, new_alloca, indices);
-    gep->replaceAllUsesWith(new_gep);
-    gep->eraseFromParent();
+    if (config_->arch == Arch::amdgpu) {
+      auto *new_alloca = builder.CreateAlloca(new_type, (unsigned)5);
+      new_alloca->setAlignment(Align(8));
+      auto new_ty = llvm::PointerType::get(new_type, unsigned(0));
+      auto *new_cast = builder.CreateAddrSpaceCast(new_alloca, new_ty);
+      new_alloca->setAlignment(Align(8));
+      TI_ASSERT(alloca->hasOneUse());
+      auto *cast = llvm::cast<llvm::AddrSpaceCastInst>(alloca->user_back());
+      TI_ASSERT(cast->hasOneUse());
+      auto *gep = llvm::cast<llvm::GetElementPtrInst>(cast->user_back());
+      TI_ASSERT(gep->getPointerOperand() == cast);
+      std::vector<Value *> indices(gep->idx_begin(), gep->idx_end());
+      builder.SetInsertPoint(gep);
+      auto *new_gep = builder.CreateInBoundsGEP(new_type, new_cast, indices);
+      gep->replaceAllUsesWith(new_gep);
+      gep->eraseFromParent(); 
+      cast->eraseFromParent();
+    } else {
+      auto *new_alloca = builder.CreateAlloca(new_type);
+      new_alloca->setAlignment(Align(8));
+      TI_ASSERT(alloca->hasOneUse());
+      auto *gep = llvm::cast<llvm::GetElementPtrInst>(alloca->user_back());
+      TI_ASSERT(gep->getPointerOperand() == alloca);
+      std::vector<Value *> indices(gep->idx_begin(), gep->idx_end());
+      builder.SetInsertPoint(gep);
+      auto *new_gep = builder.CreateInBoundsGEP(new_type, new_alloca, indices);
+      gep->replaceAllUsesWith(new_gep);
+      gep->eraseFromParent();
+    }
     alloca->eraseFromParent();
   }
 }

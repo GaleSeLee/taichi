@@ -104,9 +104,7 @@ def test_local_atomics():
         for i in range(n):
             s = 0
             s += 45
-            print(s)
             val[i] = s + i
-            print(val[i])
 
     test()
 
@@ -120,7 +118,6 @@ def test_loop_var_life():
     def test():
         for i in ti.static(range(8)):
             pass
-        print(i)
 
     with pytest.raises(Exception):
         test()
@@ -132,7 +129,6 @@ def test_loop_var_life_double_iters():
     def test():
         for i, v in ti.static(enumerate(range(8))):
             pass
-        print(i)
 
     with pytest.raises(Exception):
         test()

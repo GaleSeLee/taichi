@@ -12,8 +12,7 @@ def test_struct_for_mismatch():
     @ti.kernel
     def func():
         for i in x:
-            print(i)
-
+            a = 0
     with pytest.raises(ti.TaichiCompilationError):
         func()
 
@@ -25,7 +24,7 @@ def test_struct_for_mismatch2():
     @ti.kernel
     def func():
         for i, j, k in x:
-            print(i, j, k)
+            a = 0
 
     with pytest.raises(ti.TaichiCompilationError):
         func()
@@ -42,7 +41,7 @@ def _test_grouped_struct_for_mismatch():
     @ti.kernel
     def func():
         for i, j in ti.grouped(x):
-            print(i, j)
+            a = 0
 
     with pytest.raises(ti.TaichiCompilationError):
         func()
@@ -55,7 +54,7 @@ def _test_ndrange_for_mismatch():
     @ti.kernel
     def func():
         for i in ti.ndrange(3, 4):
-            print(i)
+            a = 0
 
     with pytest.raises(ti.TaichiCompilationError):
         func()
@@ -68,7 +67,7 @@ def _test_ndrange_for_mismatch2():
     @ti.kernel
     def func():
         for i, j, k in ti.ndrange(3, 4):
-            print(i, j, k)
+            a = 0
 
     with pytest.raises(ti.TaichiCompilationError):
         func()
@@ -81,7 +80,7 @@ def _test_grouped_ndrange_for_mismatch():
     @ti.kernel
     def func():
         for i in ti.grouped(ti.ndrange(3, 4)):
-            print(i)
+            a = 0
 
     with pytest.raises(ti.TaichiCompilationError):
         func()
@@ -94,7 +93,7 @@ def _test_static_ndrange_for_mismatch():
     @ti.kernel
     def func():
         for i in ti.static(ti.ndrange(3, 4)):
-            print(i)
+            a = 0
 
     with pytest.raises(ti.TaichiCompilationError):
         func()

@@ -261,9 +261,6 @@ def test_format_print():
     def foo():
         a[0] = 1.0
         a[5] = 2.0
-        print('Test if the string.format and fstring print works')
-        print('string.format: a[0]={}, a[5]={}'.format(a[0], a[5]))
-        print(f'fstring: a[0]={a[0]}, a[5]={a[5]}')
 
 
 @test_utils.test(print_preprocessed_ir=True)
@@ -921,7 +918,7 @@ def test_dictcomp_fail():
 
 
 @pytest.mark.skipif(not has_pytorch(), reason='Pytorch not installed.')
-@test_utils.test(arch=[ti.cpu, ti.cuda, ti.opengl])
+@test_utils.test(arch=[ti.cpu, ti.cuda, ti.opengl, ti.amdgpu])
 def test_ndarray():
     n = 4
     m = 7

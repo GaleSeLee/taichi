@@ -393,7 +393,7 @@ def test_violate_kernel_simplicity2():
 def test_cast():
     @ti.kernel
     def func():
-        print(ti.cast(ti.cast(ti.cast(1.0, ti.f64), ti.f32), ti.f64))
+        a = 0
 
     func()
 

@@ -131,7 +131,7 @@ def test_repeated_arg_name():
     @ti.kernel
     def test2(v: ti.f32):
         for i in range(n):
-            print(v)
+            a = 0
 
     sym_pos = ti.graph.Arg(ti.graph.ArgKind.NDARRAY, 'pos', ti.f32, ndim=1)
     sym_pos1 = ti.graph.Arg(ti.graph.ArgKind.SCALAR, 'pos', ti.f32)

@@ -93,7 +93,6 @@ def bls_test_template(dim,
     def check():
         for I in ti.grouped(y2):
             if y[I] != y2[I]:
-                print('check failed', I, y[I], y2[I])
                 mismatch[None] = 1
 
     check()

@@ -194,7 +194,6 @@ def test_rand_promote():
     def init():
         for i, j in x:
             x[i, j] = ti.random(dtype=dtype)
-            print(x[i, j])
 
     init()
 

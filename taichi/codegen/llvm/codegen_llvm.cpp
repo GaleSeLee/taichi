@@ -2029,7 +2029,7 @@ std::tuple<llvm::Value *, llvm::Value *> TaskCodeGenLLVM::get_range_for_bounds(
 }
 
 void TaskCodeGenLLVM::create_offload_struct_for(OffloadedStmt *stmt,
-                                                bool spmd) {
+                                                uint8_t spmd) {
   using namespace llvm;
   // TODO: instead of constructing tons of LLVM IR, writing the logic in
   // runtime.cpp may be a cleaner solution. See
@@ -2132,10 +2132,19 @@ void TaskCodeGenLLVM::create_offload_struct_for(OffloadedStmt *stmt,
     llvm::Value *thread_idx = nullptr, *block_dim = nullptr;
 
     if (spmd) {
-      thread_idx =
-          builder->CreateIntrinsic(Intrinsic::nvvm_read_ptx_sreg_tid_x, {}, {});
-      block_dim = builder->CreateIntrinsic(Intrinsic::nvvm_read_ptx_sreg_ntid_x,
-                                           {}, {});
+      if (spmd == 1) {
+        thread_idx =
+            builder->CreateIntrinsic(Intrinsic::nvvm_read_ptx_sreg_tid_x, {}, {});
+        block_dim = builder->CreateIntrinsic(Intrinsic::nvvm_read_ptx_sreg_ntid_x,
+                                            {}, {});
+      }
+      else {
+        thread_idx = 
+          builder->CreateIntrinsic(Intrinsic::amdgcn_workitem_id_x, {}, {});
+        auto workgroup_dim_ = call("__ockl_get_local_size", llvm::ConstantInt::get(llvm::Type::getInt32Ty(*llvm_context), 0));
+        block_dim = builder->CreateTrunc(workgroup_dim_, llvm::Type::getInt32Ty(*llvm_context));
+      }
+
       builder->CreateStore(builder->CreateAdd(thread_idx, lower_bound),
                            loop_index);
     } else {
