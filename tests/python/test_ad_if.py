@@ -244,7 +244,7 @@ def test_stack():
     func()
 
 
-@test_utils.test()
+@test_utils.test(print_kernel_llvm_ir=True)
 def test_if_condition_depend_on_for_loop_index():
     scalar = lambda: ti.field(dtype=ti.f32)
     vec = lambda: ti.Vector.field(3, dtype=ti.f32)

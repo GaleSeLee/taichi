@@ -766,20 +766,20 @@ void taichi_assert_format(LLVMRuntime *runtime,
   if (!enable_assert || test != 0)
     return;
   if (!runtime->error_code) {
-    locked_task(&runtime->error_message_lock, [&] {
-      if (!runtime->error_code) {
-        runtime->error_code = 1;  // Assertion failure
+    // locked_task(&runtime->error_message_lock, [&] {
+    //   if (!runtime->error_code) {
+    //     runtime->error_code = 1;  // Assertion failure
 
-        std::memset(runtime->error_message_template, 0,
-               taichi_error_message_max_length);
-        std::memcpy(runtime->error_message_template, format,
-               std::min(taichi_strlen(format),
-                        taichi_error_message_max_length - 1));
-        for (int i = 0; i < num_arguments; i++) {
-          runtime->error_message_arguments[i] = arguments[i];
-        }
-      }
-    });
+    //     std::memset(runtime->error_message_template, 0,
+    //            taichi_error_message_max_length);
+    //     std::memcpy(runtime->error_message_template, format,
+    //            std::min(taichi_strlen(format),
+    //                     taichi_error_message_max_length - 1));
+    //     for (int i = 0; i < num_arguments; i++) {
+    //       runtime->error_message_arguments[i] = arguments[i];
+    //     }
+    //   }
+    // });
   }
 #if ARCH_cuda
   // Kill this CUDA thread.
