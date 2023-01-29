@@ -19,6 +19,7 @@ namespace taichi {
 namespace lang {
 using namespace llvm;
 #if defined(TI_WITH_AMDGPU)
+
 struct AMDGPUConvertAllocaInstAddressSpacePass : public FunctionPass {
   static inline char ID{0};
   AMDGPUConvertAllocaInstAddressSpacePass() : FunctionPass(ID) {
@@ -51,6 +52,118 @@ struct AMDGPUConvertAllocaInstAddressSpacePass : public FunctionPass {
     return false;
   }
 };
+
+struct AddStructForFuncPass : public ModulePass {
+  static inline char ID{0};
+  std::string func_name_;
+  AddStructForFuncPass(std::string func_name) : ModulePass(ID) {
+    func_name_ = func_name;
+  }
+  bool runOnFunction(llvm::Module &M) override {
+    auto struct_for_func = module.getFunction("parallel_struct_for");
+    auto &llvm_context = module.getContext();
+    auto value_map = llvm::ValueToValueMapTy();
+    auto patched_struct_for_func =
+        llvm::CloneFunction(struct_for_func, value_map);
+    patched_struct_for_func->setName(func_name_);
+
+    int num_found_alloca = 0;
+    llvm::AllocaInst *alloca = nullptr;
+
+    auto char_type = llvm::Type::getInt8Ty(llvm_context);
+
+    // Find the "1" in "char tls_buffer[1]" and replace it with
+    // "tls_buffer_size"
+    for (auto &bb : *patched_struct_for_func) {
+      for (llvm::Instruction &inst : bb) {
+        auto now_alloca = llvm::dyn_cast<AllocaInst>(&inst);
+        if (!now_alloca || now_alloca->getAlign().value() != 8)
+          continue;
+        auto alloca_type = now_alloca->getAllocatedType();
+        // Allocated type should be array [1 x i8]
+      if (alloca_type->isArrayTy() && alloca_type->getArrayNumElements() == 1 &&
+          alloca_type->getArrayElementType() == char_type) {
+          alloca = now_alloca;
+          num_found_alloca++;
+        }
+      }
+    }
+    TI_ASSERT(num_found_alloca == 1 && alloca);
+    auto new_type = llvm::ArrayType::get(char_type, tls_size);
+    llvm::IRBuilder<> builder(alloca);
+    auto *new_alloca = builder.CreateAlloca(new_type);
+    new_alloca->setAlignment(Align(8));
+    TI_ASSERT(alloca->hasOneUse());
+    auto *gep = llvm::cast<llvm::GetElementPtrInst>(alloca->user_back());
+    TI_ASSERT(gep->getPointerOperand() == alloca);
+    std::vector<Value *> indices(gep->idx_begin(), gep->idx_end());
+    builder.SetInsertPoint(gep);
+    auto *new_gep = builder.CreateInBoundsGEP(new_type, new_alloca, indices);
+    gep->replaceAllUsesWith(new_gep);
+    gep->eraseFromParent();
+    alloca->eraseFromParent();
+    return false;
+  }
+}
+
+struct AMDGPUAddStructForFuncPass : public ModulePass {
+  static inline char ID{0};
+  std::string func_name_;
+  AMDGPUAddStructForFuncPass(std::string func_name) : ModulePass(ID) {
+    func_name_ = func_name;
+  }
+  bool runOnFunction(llvm::Module &M) override {
+    auto struct_for_func = module.getFunction("parallel_struct_for");
+    auto &llvm_context = module.getContext();
+    auto value_map = llvm::ValueToValueMapTy();
+    auto patched_struct_for_func =
+        llvm::CloneFunction(struct_for_func, value_map);
+    patched_struct_for_func->setName(func_name_);
+
+    int num_found_alloca = 0;
+    llvm::AllocaInst *alloca = nullptr;
+
+    auto char_type = llvm::Type::getInt8Ty(llvm_context);
+
+    // Find the "1" in "char tls_buffer[1]" and replace it with
+    // "tls_buffer_size"
+    for (auto &bb : *patched_struct_for_func) {
+      for (llvm::Instruction &inst : bb) {
+        auto now_alloca = llvm::dyn_cast<AllocaInst>(&inst);
+        if (!now_alloca || now_alloca->getAlign().value() != 8)
+          continue;
+        auto alloca_type = now_alloca->getAllocatedType();
+        // Allocated type should be array [1 x i8]
+      if (alloca_type->isArrayTy() && alloca_type->getArrayNumElements() == 1 &&
+          alloca_type->getArrayElementType() == char_type) {
+          alloca = now_alloca;
+          num_found_alloca++;
+        }
+      }
+    }
+    TI_ASSERT(num_found_alloca == 1 && alloca);
+    auto new_type = llvm::ArrayType::get(char_type, tls_size);
+    llvm::IRBuilder<> builder(alloca);
+    auto *new_alloca = builder.CreateAlloca(new_type, (unsigned)5);
+    new_alloca->setAlignment(Align(8));
+    auto new_ty = llvm::PointerType::get(new_type, unsigned(0));
+    auto *new_cast = builder.CreateAddrSpaceCast(new_alloca, new_ty);
+    new_alloca->setAlignment(Align(8));
+    TI_ASSERT(alloca->hasOneUse());
+    auto *cast = llvm::cast<llvm::AddrSpaceCastInst>(alloca->user_back());
+    TI_ASSERT(cast->hasOneUse());
+    auto *gep = llvm::cast<llvm::GetElementPtrInst>(cast->user_back());
+    TI_ASSERT(gep->getPointerOperand() == cast);
+    std::vector<Value *> indices(gep->idx_begin(), gep->idx_end());
+    builder.SetInsertPoint(gep);
+    auto *new_gep = builder.CreateInBoundsGEP(new_type, new_cast, indices);
+    gep->replaceAllUsesWith(new_gep);
+    gep->eraseFromParent(); 
+    cast->eraseFromParent();
+    alloca->eraseFromParent();
+    return false;
+  }
+}
 
 struct AMDGPUConvertFuncParamAddressSpacePass : public ModulePass {
   static inline char ID{0};
