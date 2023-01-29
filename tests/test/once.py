@@ -35,7 +35,6 @@ def test_if_condition_depend_on_for_loop_index():
         simulation(5)
 
 
-test_if_condition_depend_on_for_loop_index()
 
 def test_mpm():
     real = ti.f32
@@ -215,3 +214,13 @@ def test_mpm():
         init_v[None][0] -= learning_rate * grad[0]
         init_v[None][1] -= learning_rate * grad[1]
 
+def test_assert_basic():
+    @ti.kernel
+    def func():
+        x = 20
+        assert 10 <= x < 20
+
+    with pytest.raises(AssertionError):
+        func()
+
+test_assert_basic()
