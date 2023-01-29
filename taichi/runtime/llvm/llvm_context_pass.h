@@ -10,6 +10,8 @@
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/Support/SourceMgr.h"
+#include "llvm/Transforms/Utils/ValueMapper.h"
+#include "llvm/Transforms/Utils/Cloning.h"
 
 #if defined(TI_WITH_AMDGPU)
 #include "taichi/rhi/amdgpu/amdgpu_context.h"
@@ -55,13 +57,15 @@ struct AMDGPUConvertAllocaInstAddressSpacePass : public FunctionPass {
 
 struct AddStructForFuncPass : public ModulePass {
   static inline char ID{0};
+  int tls_size_;
   std::string func_name_;
-  AddStructForFuncPass(std::string func_name) : ModulePass(ID) {
+  AddStructForFuncPass(std::string func_name, int tls_size) : ModulePass(ID) {
     func_name_ = func_name;
+    tls_size_ = tls_size;
   }
-  bool runOnFunction(llvm::Module &M) override {
-    auto struct_for_func = module.getFunction("parallel_struct_for");
-    auto &llvm_context = module.getContext();
+  bool runOnModule(llvm::Module &M) override {
+    auto struct_for_func = M.getFunction("parallel_struct_for");
+    auto &llvm_context = M.getContext();
     auto value_map = llvm::ValueToValueMapTy();
     auto patched_struct_for_func =
         llvm::CloneFunction(struct_for_func, value_map);
@@ -89,7 +93,7 @@ struct AddStructForFuncPass : public ModulePass {
       }
     }
     TI_ASSERT(num_found_alloca == 1 && alloca);
-    auto new_type = llvm::ArrayType::get(char_type, tls_size);
+    auto new_type = llvm::ArrayType::get(char_type, tls_size_);
     llvm::IRBuilder<> builder(alloca);
     auto *new_alloca = builder.CreateAlloca(new_type);
     new_alloca->setAlignment(Align(8));
@@ -104,17 +108,19 @@ struct AddStructForFuncPass : public ModulePass {
     alloca->eraseFromParent();
     return false;
   }
-}
+};
 
 struct AMDGPUAddStructForFuncPass : public ModulePass {
   static inline char ID{0};
+  int tls_size_;
   std::string func_name_;
-  AMDGPUAddStructForFuncPass(std::string func_name) : ModulePass(ID) {
+  AMDGPUAddStructForFuncPass(std::string func_name, int tls_size) : ModulePass(ID) {
     func_name_ = func_name;
+    tls_size_ = tls_size;
   }
-  bool runOnFunction(llvm::Module &M) override {
-    auto struct_for_func = module.getFunction("parallel_struct_for");
-    auto &llvm_context = module.getContext();
+  bool runOnModule(llvm::Module &M) override {
+    auto struct_for_func = M.getFunction("parallel_struct_for");
+    auto &llvm_context = M.getContext();
     auto value_map = llvm::ValueToValueMapTy();
     auto patched_struct_for_func =
         llvm::CloneFunction(struct_for_func, value_map);
@@ -142,7 +148,7 @@ struct AMDGPUAddStructForFuncPass : public ModulePass {
       }
     }
     TI_ASSERT(num_found_alloca == 1 && alloca);
-    auto new_type = llvm::ArrayType::get(char_type, tls_size);
+    auto new_type = llvm::ArrayType::get(char_type, tls_size_);
     llvm::IRBuilder<> builder(alloca);
     auto *new_alloca = builder.CreateAlloca(new_type, (unsigned)5);
     new_alloca->setAlignment(Align(8));
@@ -163,7 +169,7 @@ struct AMDGPUAddStructForFuncPass : public ModulePass {
     alloca->eraseFromParent();
     return false;
   }
-}
+};
 
 struct AMDGPUConvertFuncParamAddressSpacePass : public ModulePass {
   static inline char ID{0};
