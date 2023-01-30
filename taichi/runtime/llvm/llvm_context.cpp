@@ -63,11 +63,15 @@
 #include "taichi/rhi/cuda/cuda_context.h"
 #endif
 
+#if defined(TI_WITH_AMDGPU)
+#include "taichi/rhi/amdgpu/amdgpu_context.h"
+#endif
+
 namespace taichi::lang {
 
 using namespace llvm;
 
-TaichiLLVMContext::TaichiLLVMContext(CompileConfig *config, Arch arch)
+TaichiLLVMContext::TaichiLLVMContext(const CompileConfig &config, Arch arch)
     : config_(config), arch_(arch) {
   TI_TRACE("Creating Taichi llvm context for arch: {}", arch_name(arch));
   main_thread_id_ = std::this_thread::get_id();
@@ -536,6 +540,10 @@ std::unique_ptr<llvm::Module> TaichiLLVMContext::module_from_file(
       function_pass_manager.doFinalization();
       patch_intrinsic("thread_idx", llvm::Intrinsic::amdgcn_workitem_id_x);
       patch_intrinsic("block_idx", llvm::Intrinsic::amdgcn_workgroup_id_x);
+<<<<<<< HEAD
+=======
+
+>>>>>>> 593cabaa492c33987eba54d7314a653fa778ebbc
       link_module_with_amdgpu_libdevice(module);
       patch_amdgpu_kernel_dim(
           "block_dim", llvm::ConstantInt::get(llvm::Type::getInt32Ty(*ctx), 0));
@@ -626,7 +634,6 @@ void TaichiLLVMContext::link_module_with_amdgpu_libdevice(
   }
 #endif
 }
-
 
 void TaichiLLVMContext::add_struct_module(std::unique_ptr<Module> module,
                                           int tree_id) {

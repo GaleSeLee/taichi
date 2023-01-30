@@ -7,12 +7,11 @@ from tests import test_utils
 
 
 def _get_matrix_swizzle_apis():
-    swizzle_gen = ti.lang.swizzle_generator.SwizzleGenerator()
+    swizzle_gen = ti.lang.matrix._generate_swizzle_patterns
     KEMAP_SET = ['xyzw', 'rgba', 'stpq']
     res = []
     for key_group in KEMAP_SET:
-        sw_patterns = swizzle_gen.generate(key_group, required_length=4)
-        sw_patterns = map(lambda p: ''.join(p), sw_patterns)
+        sw_patterns = swizzle_gen(key_group, required_length=4)
         res += sw_patterns
     return sorted(res)
 
