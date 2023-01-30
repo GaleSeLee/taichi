@@ -21,6 +21,7 @@ namespace taichi {
 namespace lang {
 using namespace llvm;
 #if defined(TI_WITH_AMDGPU)
+
 struct AMDGPUConvertAllocaInstAddressSpacePass : public FunctionPass {
   static inline char ID{0};
   AMDGPUConvertAllocaInstAddressSpacePass() : FunctionPass(ID) {
@@ -54,11 +55,10 @@ struct AMDGPUConvertAllocaInstAddressSpacePass : public FunctionPass {
   }
 };
 
-
 struct AddStructForFuncPass : public ModulePass {
   static inline char ID{0};
-  std::string func_name_;
   int tls_size_;
+  std::string func_name_;
   AddStructForFuncPass(std::string func_name, int tls_size) : ModulePass(ID) {
     func_name_ = func_name;
     tls_size_ = tls_size;
@@ -112,8 +112,8 @@ struct AddStructForFuncPass : public ModulePass {
 
 struct AMDGPUAddStructForFuncPass : public ModulePass {
   static inline char ID{0};
-  std::string func_name_;
   int tls_size_;
+  std::string func_name_;
   AMDGPUAddStructForFuncPass(std::string func_name, int tls_size) : ModulePass(ID) {
     func_name_ = func_name;
     tls_size_ = tls_size;
