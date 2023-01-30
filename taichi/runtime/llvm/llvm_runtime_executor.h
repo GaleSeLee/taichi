@@ -59,7 +59,7 @@ class LlvmRuntimeExecutor {
 
   uint64_t *get_ndarray_alloc_info_ptr(const DeviceAllocation &alloc);
 
-  CompileConfig *get_config() {
+  const CompileConfig &get_config() const {
     return config_;
   }
 
@@ -103,7 +103,7 @@ class LlvmRuntimeExecutor {
   T runtime_query(const std::string &key,
                   uint64 *result_buffer,
                   Args &&...args) {
-    TI_ASSERT(arch_uses_llvm(config_->arch));
+    TI_ASSERT(arch_uses_llvm(config_.arch));
 
     TaichiLLVMContext *tlctx = nullptr;
     if (llvm_context_device_) {
@@ -145,7 +145,7 @@ class LlvmRuntimeExecutor {
                                                   uint64 *result_buffer);
 
  private:
-  CompileConfig *config_;
+  CompileConfig &config_;
 
   // TODO(zhanlue): compile - runtime split for TaichiLLVMContext
   //
