@@ -2029,7 +2029,8 @@ std::tuple<llvm::Value *, llvm::Value *> TaskCodeGenLLVM::get_range_for_bounds(
 }
 
 void TaskCodeGenLLVM::create_offload_struct_for(OffloadedStmt *stmt,
-                                                OffloadSPMDType spmd) {
+                                                llvm::Value *thread_idx,
+                                                llvm::Value *block_dim) {
   using namespace llvm;
   // TODO: instead of constructing tons of LLVM IR, writing the logic in
   // runtime.cpp may be a cleaner solution. See
@@ -2129,25 +2130,8 @@ void TaskCodeGenLLVM::create_offload_struct_for(OffloadedStmt *stmt,
       call("block_barrier");  // "__syncthreads()"
     }
 
-    llvm::Value *thread_idx = nullptr, *block_dim = nullptr;
-
-    if (spmd == OffloadSPMDType::nvgpu) {
-      thread_idx =
-          builder->CreateIntrinsic(Intrinsic::nvvm_read_ptx_sreg_tid_x, {}, {});
-      block_dim = builder->CreateIntrinsic(Intrinsic::nvvm_read_ptx_sreg_ntid_x,
-                                          {}, {});
-      builder->CreateStore(builder->CreateAdd(thread_idx, lower_bound),
-                          loop_index);
-    } else if (spmd == OffloadSPMDType::amdgpu) {
-      thread_idx = 
-        builder->CreateIntrinsic(Intrinsic::amdgcn_workitem_id_x, {}, {});
-      auto workgroup_dim_ = call("__ockl_get_local_size", llvm::ConstantInt::get(llvm::Type::getInt32Ty(*llvm_context), 0));
-      block_dim = builder->CreateTrunc(workgroup_dim_, llvm::Type::getInt32Ty(*llvm_context));
-      builder->CreateStore(builder->CreateAdd(thread_idx, lower_bound),
-                          loop_index);
-    } else {
-      builder->CreateStore(lower_bound, loop_index);
-    }
+    builder->CreateStore(builder->CreateAdd(thread_idx, lower_bound),
+                        loop_index);
 
     auto loop_test_bb = BasicBlock::Create(*llvm_context, "loop_test", func);
     auto loop_body_bb = BasicBlock::Create(*llvm_context, "loop_body", func);
@@ -2229,14 +2213,8 @@ void TaskCodeGenLLVM::create_offload_struct_for(OffloadedStmt *stmt,
     {
       // body tail: increment loop_index and jump to loop_test
       builder->SetInsertPoint(body_tail_bb);
-
-      if (spmd == OffloadSPMDType::nvgpu || spmd == OffloadSPMDType::amdgpu) {
-        create_increment(loop_index, block_dim);
-      } else {
-        create_increment(loop_index, tlctx->get_constant(1));
-      }
+      create_increment(loop_index, block_dim);
       builder->CreateBr(loop_test_bb);
-
       builder->SetInsertPoint(func_exit);
     }
 

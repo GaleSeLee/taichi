@@ -179,7 +179,7 @@ class TaskCodeGenCPU : public TaskCodeGenLLVM {
     } else if (stmt->task_type == Type::struct_for) {
       stmt->block_dim = std::min(stmt->snode->parent->max_num_elements(),
                                  (int64)stmt->block_dim);
-      create_offload_struct_for(stmt, OffloadSPMDType::cpu);
+      create_offload_struct_for(stmt, tlctx->get_constant(0), tlctx->get_constant(1));
     } else if (stmt->task_type == Type::listgen) {
       emit_list_gen(stmt);
     } else if (stmt->task_type == Type::gc) {

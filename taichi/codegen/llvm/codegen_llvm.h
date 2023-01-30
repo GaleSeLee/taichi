@@ -334,8 +334,7 @@ class TaskCodeGenLLVM : public IRVisitor, public LLVMModuleBuilder {
     TI_NOT_IMPLEMENTED;
   }
 
-  enum class OffloadSPMDType {cpu, nvgpu, amdgpu, dx12};
-  void create_offload_struct_for(OffloadedStmt *stmt, OffloadSPMDType spmd);
+  void create_offload_struct_for(OffloadedStmt *stmt, llvm::Value *thread_idx, llvm::Value *block_dim);
 
   void visit(LoopIndexStmt *stmt) override;
 
