@@ -71,6 +71,11 @@ FunctionCreationGuard::~FunctionCreationGuard() {
   mb->func = old_func;
   mb->builder->restoreIP(ip);
 
+  std::string outstr;
+  llvm::raw_string_ostream ostream(outstr);
+  ostream << *body;
+  ostream.flush();
+  std::cout << outstr << std::endl;
   TI_ASSERT(!llvm::verifyFunction(*body, &llvm::errs()));
 }
 
@@ -2028,9 +2033,7 @@ std::tuple<llvm::Value *, llvm::Value *> TaskCodeGenLLVM::get_range_for_bounds(
   return std::tuple(begin, end);
 }
 
-void TaskCodeGenLLVM::create_offload_struct_for(OffloadedStmt *stmt,
-                                                llvm::Value *thread_idx,
-                                                llvm::Value *block_dim) {
+void TaskCodeGenLLVM::create_offload_struct_for(OffloadedStmt *stmt) {
   using namespace llvm;
   // TODO: instead of constructing tons of LLVM IR, writing the logic in
   // runtime.cpp may be a cleaner solution. See
@@ -2130,6 +2133,7 @@ void TaskCodeGenLLVM::create_offload_struct_for(OffloadedStmt *stmt,
       call("block_barrier");  // "__syncthreads()"
     }
 
+    auto [thread_idx, block_dim] = this->get_spmd_info();
     builder->CreateStore(builder->CreateAdd(thread_idx, lower_bound),
                         loop_index);
 
