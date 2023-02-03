@@ -106,6 +106,16 @@ TaichiLLVMContext::TaichiLLVMContext(const CompileConfig &config, Arch arch)
     LLVMInitializeDirectXTargetInfo();
     LLVMInitializeDirectXAsmPrinter();
 #endif
+  } else if (arch == Arch::amdgpu) {
+#if defined(TI_WITH_AMDGPU)
+    LLVMInitializeAMDGPUTarget();
+    LLVMInitializeAMDGPUTargetMC();
+    LLVMInitializeAMDGPUTargetInfo();
+    LLVMInitializeAMDGPUAsmPrinter();
+    LLVMInitializeAMDGPUAsmParser();
+#else
+    TI_NOT_IMPLEMENTED
+#endif
   } else {
 #if defined(TI_WITH_CUDA)
     LLVMInitializeNVPTXTarget();
@@ -610,8 +620,8 @@ void TaichiLLVMContext::link_module_with_amdgpu_libdevice(
     }
 
     for (auto &f : libdevice_module->functions()) {
-      auto func_ = module->getFunction(f.getName());
-      if (!func_ && starts_with(f.getName().lower(), "__" + libdevice))
+      auto func_name = libdevice.substr(0, libdevice.length() - 3);
+      if (starts_with(f.getName().lower(), "__" + func_name))
         f.setLinkage(llvm::Function::CommonLinkage);
     }
 
@@ -801,6 +811,10 @@ void TaichiLLVMContext::mark_function_as_cuda_kernel(llvm::Function *func,
     insert_nvvm_annotation(func, "maxntidx", block_dim);
     insert_nvvm_annotation(func, "minctasm", 2);
   }
+}
+
+void TaichiLLVMContext::mark_function_as_amdgpu_kernel(llvm::Function *func) {
+  func->setCallingConv(llvm::CallingConv::AMDGPU_KERNEL);
 }
 
 void TaichiLLVMContext::eliminate_unused_functions(
