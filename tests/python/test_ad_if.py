@@ -265,10 +265,7 @@ def test_if_condition_depend_on_for_loop_index():
             coord = ti.Vector([i, j])
             for n in range(12):
                 f = ti.Vector([0.0, 0.0, 0.0])
-                if n < 4:
-                    f = ti.Vector([1.0, 1.0, 1.0])
-                else:
-                    f = f_bend[0] * pos[coord]
+                f = f_bend[0] * pos[coord]
                 F[coord] += f
             pos[coord] += 1.0 * t
 
