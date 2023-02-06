@@ -244,8 +244,7 @@ def test_stack():
     func()
 
 
-#FIXME: amdgpu backend(assign gale)
-@test_utils.test(exclude=ti.amdgpu)
+@test_utils.test()
 def test_if_condition_depend_on_for_loop_index():
     scalar = lambda: ti.field(dtype=ti.f32)
     vec = lambda: ti.Vector.field(3, dtype=ti.f32)
@@ -265,7 +264,10 @@ def test_if_condition_depend_on_for_loop_index():
             coord = ti.Vector([i, j])
             for n in range(12):
                 f = ti.Vector([0.0, 0.0, 0.0])
-                f = f_bend[0] * pos[coord]
+                if n < 4:
+                    f = ti.Vector([1.0, 1.0, 1.0])
+                else:
+                    f = f_bend[0] * pos[coord]
                 F[coord] += f
             pos[coord] += 1.0 * t
 
