@@ -510,6 +510,54 @@ std::unique_ptr<llvm::Module> TaichiLLVMContext::module_from_file(
     }
 
 #ifdef TI_WITH_AMDGPU
+    auto patch_shfl_up = [&](std::string name,
+                               std::vector<llvm::Type *> types = {},
+                               std::vector<llvm::Value *> extra_args = {}) {
+      auto func = module->getFunction(name);
+      if (!func) {
+        return;
+      }
+      func->deleteBody();
+      auto bb = llvm::BasicBlock::Create(*ctx, "entry", func);
+      IRBuilder<> builder(*ctx);
+      builder.SetInsertPoint(bb);
+
+      int arg_cnt = 0;
+      llvm::Value *input_val;
+      llvm::Value *delta;
+      for(auto &arg : func->args()) {
+        arg_cnt++;
+        if (arg_cnt == 2) input_val = &arg;
+        if (arg_cnt == 3) delta = &arg;
+      }
+      std::vector<llvm::Value*> lo_args;
+      std::vector<llvm::Value*> hi_args;
+      std::vector<llvm::Value*> permute_args;
+      lo_args.push_back(llvm::ConstantInt::get(llvm::Type::getInt32Ty(*ctx), -1));
+      hi_args.push_back(llvm::ConstantInt::get(llvm::Type::getInt32Ty(*ctx), -1));
+      lo_args.push_back(llvm::ConstantInt::get(llvm::Type::getInt32Ty(*ctx), 0));
+
+      auto bitcast = builder.CreateFPToSI(input_val, llvm::Type::getInt32Ty(*ctx));
+      auto intrinsic_lo = builder.CreateIntrinsic(Intrinsic::amdgcn_mbcnt_lo, types, lo_args);
+      hi_args.push_back(intrinsic_lo);
+      auto intrinsic_hi = builder.CreateIntrinsic(Intrinsic::amdgcn_mbcnt_hi, types, hi_args);
+      auto neg_delta = builder.CreateSub(llvm::ConstantInt::get(llvm::Type::getInt32Ty(*ctx), 0), delta);
+      auto delta_ret = builder.CreateAdd(neg_delta, intrinsic_hi);
+      auto width_ret = builder.CreateAnd(intrinsic_hi, llvm::ConstantInt::get(llvm::Type::getInt32Ty(*ctx), -32));
+      auto cond = builder.CreateICmpSLT(delta_ret, width_ret);
+      auto select = builder.CreateSelect(cond, intrinsic_hi, delta_ret);
+      auto shl = builder.CreateShl(select, llvm::ConstantInt::get(llvm::Type::getInt32Ty(*ctx), 2));
+
+      permute_args.push_back(shl);
+      permute_args.push_back(bitcast);
+
+      auto intrinsic_permute = builder.CreateIntrinsic(llvm::Intrinsic::amdgcn_ds_bpermute, types, permute_args);
+      auto ret = builder.CreateSIToFP(intrinsic_permute, llvm::Type::getFloatTy(*ctx));
+      builder.CreateRet(ret);
+
+      TaichiLLVMContext::mark_inline(func);
+    };
+
     auto patch_amdgpu_kernel_dim = [&](std::string name, llvm::Value *lhs) {
       std::string actual_name;
       if (name == "block_dim")
@@ -549,6 +597,7 @@ std::unique_ptr<llvm::Module> TaichiLLVMContext::module_from_file(
       patch_intrinsic("block_idx", llvm::Intrinsic::amdgcn_workgroup_id_x);
       patch_intrinsic("block_barrier", llvm::Intrinsic::amdgcn_s_barrier,
                       false);
+      patch_shfl_up("cuda_shfl_up_sync_f32");
 
       link_module_with_amdgpu_libdevice(module);
       patch_amdgpu_kernel_dim(
